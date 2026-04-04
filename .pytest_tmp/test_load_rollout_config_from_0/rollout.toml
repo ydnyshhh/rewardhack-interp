@@ -8,6 +8,6 @@ start_seed = 10
 num_tasks = 3
 
 [model]
-model_name_or_path = "Qwen/Qwen3-1.7B"
+model_name_or_path = "Qwen/Qwen3-4B"
 torch_dtype = "bfloat16"
 device_map = "auto"

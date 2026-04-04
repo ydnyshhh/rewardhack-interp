@@ -25,7 +25,7 @@ To send the run to W&B, add a `[wandb]` block to the rollout config, for example
 enabled = true
 project = "rewardhack-interp"
 entity = "your-entity"
-group = "qwen3-1.7b-spec-overfit"
+group = "qwen3-4b-spec-overfit"
 mode = "online"
 ```
 
@@ -92,7 +92,7 @@ GRPO runs also support W&B through the same `[wandb]` config block.
 
 The main GRPO example now includes:
 
-- Qwen 3 1.7B as the default first-pass training model
+- Qwen 3 4B as the default first-pass training model
 - a larger training slice instead of a smoke-test-sized run
 - an explicit held-out evaluation seed block
 - post-training evaluation across the base model, saved checkpoints, and final policy
@@ -123,7 +123,7 @@ The output summarizes official reward, oracle reward, verifier gap, false-pass r
 This is the first full separation experiment:
 
 - environment: `code/patch-verification`
-- model: `Qwen/Qwen3-1.7B`
+- model: `Qwen/Qwen3-4B`
 - profile: `high`
 - question: are false passes internally separable from true passes?
 

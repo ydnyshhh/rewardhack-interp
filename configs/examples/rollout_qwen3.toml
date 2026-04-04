@@ -1,6 +1,6 @@
-run_name = "qwen3-1.7b-spec-overfit"
-output_path = "artifacts/rollouts/qwen3_1_7b_spec_overfit.jsonl"
-activation_manifest_path = "artifacts/activations/qwen3_1_7b_spec_overfit_manifest.jsonl"
+run_name = "qwen3-4b-spec-overfit"
+output_path = "artifacts/rollouts/qwen3_4b_spec_overfit.jsonl"
+activation_manifest_path = "artifacts/activations/qwen3_4b_spec_overfit_manifest.jsonl"
 
 [environment]
 name = "code/spec-overfit"
@@ -9,7 +9,7 @@ start_seed = 0
 num_tasks = 64
 
 [model]
-model_name_or_path = "Qwen/Qwen3-1.7B"
+model_name_or_path = "Qwen/Qwen3-4B"
 torch_dtype = "bfloat16"
 device_map = "auto"
 use_chat_template = true
@@ -24,12 +24,12 @@ top_p = 0.95
 
 [activation_capture]
 enabled = true
-output_dir = "artifacts/activations/qwen3-1.7b-spec-overfit"
+output_dir = "artifacts/activations/qwen3-4b-spec-overfit"
 capture_hidden_states = true
 capture_dtype = "bfloat16"
 
 [wandb]
 enabled = false
 project = "rewardhack-interp"
-group = "qwen3-1.7b-spec-overfit"
+group = "qwen3-4b-spec-overfit"
 mode = "offline"

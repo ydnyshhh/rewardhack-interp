@@ -1,6 +1,6 @@
 experiment_name = "experiment-1-patch-verification-separation"
-rollout_path = "artifacts/rollouts/experiment1_patch_verification_qwen3_1_7b_main.jsonl"
-activation_manifest_path = "artifacts/activations/experiment1_patch_verification_qwen3_1_7b_main_manifest.jsonl"
+rollout_path = "artifacts/rollouts/experiment1_patch_verification_qwen3_4b_main.jsonl"
+activation_manifest_path = "artifacts/activations/experiment1_patch_verification_qwen3_4b_main_manifest.jsonl"
 output_dir = "artifacts/analysis/experiment1_patch_verification_main"
 pooling_strategy = "last_completion_token"
 layer_name_pattern = "hidden_state.layer_*"

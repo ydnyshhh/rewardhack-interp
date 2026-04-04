@@ -1,6 +1,6 @@
-run_name = "experiment1-patch-verification-qwen3-1.7b-pilot"
-output_path = "artifacts/rollouts/experiment1_patch_verification_qwen3_1_7b_pilot.jsonl"
-activation_manifest_path = "artifacts/activations/experiment1_patch_verification_qwen3_1_7b_pilot_manifest.jsonl"
+run_name = "experiment1-patch-verification-qwen3-4b-pilot"
+output_path = "artifacts/rollouts/experiment1_patch_verification_qwen3_4b_pilot.jsonl"
+activation_manifest_path = "artifacts/activations/experiment1_patch_verification_qwen3_4b_pilot_manifest.jsonl"
 
 [environment]
 name = "code/patch-verification"
@@ -9,7 +9,7 @@ start_seed = 0
 num_tasks = 64
 
 [model]
-model_name_or_path = "Qwen/Qwen3-1.7B"
+model_name_or_path = "Qwen/Qwen3-4B"
 torch_dtype = "bfloat16"
 device_map = "auto"
 use_chat_template = true
@@ -24,7 +24,7 @@ top_p = 0.95
 
 [activation_capture]
 enabled = true
-output_dir = "artifacts/activations/experiment1-patch-verification-qwen3-1.7b-pilot"
+output_dir = "artifacts/activations/experiment1-patch-verification-qwen3-4b-pilot"
 capture_hidden_states = true
 capture_dtype = "float32"
 
