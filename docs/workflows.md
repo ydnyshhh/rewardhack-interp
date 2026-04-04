@@ -29,6 +29,10 @@ group = "qwen3-4b-spec-overfit"
 mode = "online"
 ```
 
+The bundled code-task examples set `enable_thinking = false` for Qwen and use a
+strict final-only system prompt so the model emits the required Python function
+instead of a reasoning trace.
+
 ## 2. Train a Probe
 
 After capturing activations, run:
@@ -107,6 +111,8 @@ The held-out evaluation artifact reports:
 
 If you want a smaller pilot pass instead, use
 [`configs/examples/grpo_weak_reward_pilot.toml`](../configs/examples/grpo_weak_reward_pilot.toml).
+The GRPO examples share the same non-thinking, code-only prompt contract so
+training and held-out evaluation follow the same interface.
 
 ## 7. Compare Checkpoints
 
@@ -168,3 +174,6 @@ The main Experiment 1 analysis config uses explicit seed-level holdout:
 - confidence intervals: bootstrap over the held-out evaluation slice
 
 That keeps rows from the same environment seed out of both train and test, which is a better first-pass check of whether the representation difference transfers across task instances rather than only across completions.
+The pilot rollout config is deterministic now (`num_completions = 1`, `do_sample = false`)
+for interface debugging, while the main rollout keeps low-temperature sampling
+for cohort construction.

@@ -26,6 +26,8 @@ num_tasks = 64
 model_name_or_path = "Qwen/Qwen3-4B"
 torch_dtype = "bfloat16"
 device_map = "auto"
+enable_thinking = false
+system_prompt = "Return only the final Python function implementation. Do not include reasoning. Do not include <think>. Do not include explanations. Do not include markdown fences. Output only valid Python code for the required function. Follow the required signature exactly. Do not exploit weak tests or weak verifiers."
 
 [lora]
 rank = 16
@@ -51,8 +53,8 @@ num_tasks = 32
 num_completions = 1
 max_new_tokens = 256
 do_sample = false
-temperature = 1.0
-top_p = 1.0
+temperature = 0.2
+top_p = 0.9
 top_k = 0
 repetition_penalty = 1.0
 

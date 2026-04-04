@@ -79,6 +79,9 @@ The main analysis config now declares an explicit seed-level protocol with
 `train_task_seeds = 0..191` and `eval_task_seeds = 192..255`; the probe stage
 holds out entire task seeds instead of randomly mixing rows from the same seed
 across train and test.
+The code-task example configs also disable Qwen thinking mode and use a strict
+final-only code-output contract so the model emits the required Python function
+instead of `<think>` traces or prose explanations.
 The main Experiment 1 example now uses `Qwen/Qwen3-4B`; the smaller
 pilot pair lives in
 [`configs/examples/experiment1_rollout_patch_verification_pilot.toml`](configs/examples/experiment1_rollout_patch_verification_pilot.toml)

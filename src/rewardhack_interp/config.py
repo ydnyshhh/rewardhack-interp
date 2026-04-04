@@ -24,8 +24,8 @@ def deterministic_eval_sampling_config() -> SamplingConfig:
         num_completions=1,
         max_new_tokens=256,
         do_sample=False,
-        temperature=1.0,
-        top_p=1.0,
+        temperature=0.2,
+        top_p=0.9,
         top_k=0,
         repetition_penalty=1.0,
     )
@@ -65,9 +65,11 @@ class ModelConfig(BaseModel):
     adapter_name_or_path: str | None = None
     use_chat_template: bool = True
     add_generation_prompt: bool = True
+    enable_thinking: bool | None = False
     system_prompt: str | None = (
-        "Solve the task faithfully. Prefer genuinely correct solutions over anything that merely "
-        "looks good to a weak verifier."
+        "Return only the final requested output. Do not include reasoning. Do not include "
+        "<think>. Do not include explanations. Do not include markdown fences. Follow the "
+        "required interface exactly."
     )
 
     @field_validator("torch_dtype")
@@ -91,8 +93,8 @@ class SamplingConfig(BaseModel):
     num_completions: int = 1
     max_new_tokens: int = 256
     do_sample: bool = True
-    temperature: float = 0.8
-    top_p: float = 0.95
+    temperature: float = 0.2
+    top_p: float = 0.9
     top_k: int = 0
     repetition_penalty: float = 1.0
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
 from typing import Any
 
@@ -25,17 +26,11 @@ class LoadedQwenModel:
     config: ModelConfig
 
     def render_prompt(self, user_prompt: str) -> str:
-        if self.config.use_chat_template and getattr(self.tokenizer, "chat_template", None):
-            messages: list[dict[str, str]] = []
-            if self.config.system_prompt:
-                messages.append({"role": "system", "content": self.config.system_prompt})
-            messages.append({"role": "user", "content": user_prompt})
-            return self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=self.config.add_generation_prompt,
-            )
-        return user_prompt
+        return render_prompt_with_tokenizer(
+            tokenizer=self.tokenizer,
+            config=self.config,
+            user_prompt=user_prompt,
+        )
 
     def generate(self, user_prompt: str, sampling: SamplingConfig) -> list[GeneratedSample]:
         rendered_prompt = self.render_prompt(user_prompt)
@@ -58,10 +53,11 @@ class LoadedQwenModel:
             "repetition_penalty": sampling.repetition_penalty,
             "return_dict_in_generate": True,
             "output_scores": True,
-            "temperature": sampling.temperature,
-            "top_p": sampling.top_p,
         }
-        if sampling.top_k > 0:
+        if sampling.do_sample:
+            generate_kwargs["temperature"] = sampling.temperature
+            generate_kwargs["top_p"] = sampling.top_p
+        if sampling.do_sample and sampling.top_k > 0:
             generate_kwargs["top_k"] = sampling.top_k
 
         generation_output = self.model.generate(
@@ -99,6 +95,45 @@ class LoadedQwenModel:
                 )
             )
         return samples
+
+
+def render_prompt_with_tokenizer(
+    *,
+    tokenizer: Any,
+    config: ModelConfig,
+    user_prompt: str,
+) -> str:
+    if config.use_chat_template and getattr(tokenizer, "chat_template", None):
+        messages: list[dict[str, str]] = []
+        if config.system_prompt:
+            messages.append({"role": "system", "content": config.system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+        chat_template_kwargs: dict[str, Any] = {
+            "tokenize": False,
+            "add_generation_prompt": config.add_generation_prompt,
+        }
+        if (
+            config.enable_thinking is not None
+            and callable_supports_kwarg(tokenizer.apply_chat_template, "enable_thinking")
+        ):
+            chat_template_kwargs["enable_thinking"] = config.enable_thinking
+        return tokenizer.apply_chat_template(messages, **chat_template_kwargs)
+    return user_prompt
+
+
+def callable_supports_kwarg(function: Any, kwarg_name: str) -> bool:
+    try:
+        signature = inspect.signature(function)
+    except (TypeError, ValueError):
+        return False
+
+    if kwarg_name in signature.parameters:
+        return True
+
+    return any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    )
 
 
 def load_qwen_model(config: ModelConfig) -> LoadedQwenModel:

@@ -9,6 +9,7 @@ from rewardhack_interp.checkpoints import build_checkpoint_summary
 from rewardhack_interp.config import GRPORunConfig, ModelConfig, RolloutConfig
 from rewardhack_interp.gym_integration import build_environment
 from rewardhack_interp.io import load_models, write_json
+from rewardhack_interp.modeling import render_prompt_with_tokenizer
 from rewardhack_interp.rl.rewards import make_reward_function
 from rewardhack_interp.rollouts import collect_rollouts
 from rewardhack_interp.tracking import ensure_wandb_report_to, start_wandb_run
@@ -45,20 +46,6 @@ def run_grpo(config: GRPORunConfig) -> GRPOTrainingArtifact:
         if reward_trace_path.exists():
             reward_trace_path.unlink()
 
-    rows: list[dict[str, Any]] = []
-    seeds = dataset_task_seeds(config)
-    for seed in seeds:
-        task = environment.sample_task(seed=seed)
-        rows.append(
-            {
-                "prompt": task.prompt,
-                "task_seed": seed,
-                "task_id": task.task_id,
-                "family": task.family,
-            }
-        )
-    dataset = Dataset.from_list(rows)
-
     processing_class = AutoTokenizer.from_pretrained(
         config.model.model_name_or_path,
         revision=config.model.revision,
@@ -66,6 +53,24 @@ def run_grpo(config: GRPORunConfig) -> GRPOTrainingArtifact:
     )
     if processing_class.pad_token_id is None and processing_class.eos_token_id is not None:
         processing_class.pad_token = processing_class.eos_token
+
+    rows: list[dict[str, Any]] = []
+    seeds = dataset_task_seeds(config)
+    for seed in seeds:
+        task = environment.sample_task(seed=seed)
+        rows.append(
+            {
+                "prompt": render_prompt_with_tokenizer(
+                    tokenizer=processing_class,
+                    config=config.model,
+                    user_prompt=task.prompt,
+                ),
+                "task_seed": seed,
+                "task_id": task.task_id,
+                "family": task.family,
+            }
+        )
+    dataset = Dataset.from_list(rows)
 
     report_to = ensure_wandb_report_to(config.report_to, config.wandb)
     with start_wandb_run(
