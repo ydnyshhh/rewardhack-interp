@@ -6,6 +6,7 @@ from rewardhack_interp.activations import load_activation_tensors
 from rewardhack_interp.config import FeatureSelectionConfig
 from rewardhack_interp.io import load_models
 from rewardhack_interp.types import ActivationCaptureArtifact, CohortLabel, PoolingStrategy
+from rewardhack_interp.utils.identifiers import activation_sample_id
 
 
 def load_feature_table(
@@ -33,7 +34,7 @@ def load_feature_table(
             )
             rows.append(pooled.reshape(-1))
             labels.append(artifact.cohort)
-            trace_ids.append(f"{artifact.trace_id}:{target_name}")
+            trace_ids.append(f"{activation_sample_id(artifact)}:{target_name}")
         if config.max_records is not None and len(rows) >= config.max_records:
             break
 

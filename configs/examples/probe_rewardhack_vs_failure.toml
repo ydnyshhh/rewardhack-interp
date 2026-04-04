@@ -1,0 +1,16 @@
+activation_manifest_path = "artifacts/activations/rewardhack_vs_failure_manifest.jsonl"
+output_path = "artifacts/analysis/probes/rewardhack_vs_failure_layerwise.json"
+pooling_strategy = "last_completion_token"
+positive_label = "reward_hack"
+negative_label = "genuine_failure"
+layer_name_pattern = "hidden_state.layer_*"
+test_size = 0.25
+random_state = 7
+max_iter = 2000
+regularization_strength = 1.0
+
+[wandb]
+enabled = false
+project = "rewardhack-interp"
+group = "rewardhack-vs-failure-probe"
+mode = "offline"

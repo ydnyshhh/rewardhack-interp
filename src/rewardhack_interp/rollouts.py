@@ -16,6 +16,7 @@ from rewardhack_interp.io import append_jsonl, write_json
 from rewardhack_interp.modeling import load_qwen_model
 from rewardhack_interp.tracking import start_wandb_run
 from rewardhack_interp.types import GenerationRecord, TrajectoryArtifact
+from rewardhack_interp.utils.identifiers import derive_sample_id
 from rewardhack_interp.utils.paths import ensure_parent_dir, to_path_string
 from rewardhack_interp.utils.seeding import set_global_seed
 
@@ -95,6 +96,10 @@ def collect_rollouts(config: RolloutConfig) -> dict[str, Any]:
                 record = TrajectoryArtifact(
                     run_id=run_id,
                     trace_id=str(evaluated_output.mech_interp_row["trace_id"]),
+                    sample_id=derive_sample_id(
+                        trace_id=str(evaluated_output.mech_interp_row["trace_id"]),
+                        completion_index=completion_index,
+                    ),
                     policy_id=config.model.policy_id,
                     model_name_or_path=config.model.model_name_or_path,
                     revision=config.model.revision,

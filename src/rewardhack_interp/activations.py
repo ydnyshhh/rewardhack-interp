@@ -6,7 +6,8 @@ from typing import Any
 
 from rewardhack_interp.config import ActivationCaptureConfig
 from rewardhack_interp.io import append_jsonl, read_json, write_json
-from rewardhack_interp.types import ActivationCaptureArtifact, TrajectoryArtifact
+from rewardhack_interp.types import ActivationCaptureArtifact, PoolingStrategy, TrajectoryArtifact
+from rewardhack_interp.utils.identifiers import safe_artifact_stem, trajectory_sample_id
 from rewardhack_interp.utils.paths import ensure_dir, to_path_string
 
 
@@ -77,23 +78,30 @@ class ActivationCaptureRunner:
                     if hidden_index == 0
                     else f"hidden_state.layer_{hidden_index - 1}"
                 )
-                captured_tensors[tensor_name] = to_capture_tensor(
+                captured_tensors[tensor_name] = prepare_capture_tensor(
                     hidden_state,
                     self.config.capture_dtype,
+                    prompt_token_count=record.generation.prompt_token_count,
+                    completion_token_count=record.generation.completion_token_count,
+                    stored_token_strategy=self.config.stored_token_strategy,
                 )
 
         captured_tensors["token_ids"] = input_ids.detach().cpu()[0]
         captured_tensors["attention_mask"] = attention_mask.detach().cpu()[0]
-        tensor_path = resolved_output_dir / f"{record.trace_id}.pt"
-        metadata_path = resolved_output_dir / f"{record.trace_id}.json"
+        sample_id = trajectory_sample_id(record)
+        file_stem = safe_artifact_stem(sample_id)
+        tensor_path = resolved_output_dir / f"{file_stem}.pt"
+        metadata_path = resolved_output_dir / f"{file_stem}.json"
         torch.save(captured_tensors, tensor_path)
 
         artifact = ActivationCaptureArtifact(
             trace_id=record.trace_id,
+            sample_id=sample_id,
             rollout_run_id=record.run_id,
             source_model_name_or_path=record.model_name_or_path,
             source_adapter_name_or_path=record.adapter_name_or_path,
             cohort=record.cohort,
+            completion_index=record.generation.completion_index,
             tensor_path=to_path_string(tensor_path),
             prompt_token_count=record.generation.prompt_token_count,
             completion_token_count=record.generation.completion_token_count,
@@ -109,6 +117,7 @@ class ActivationCaptureRunner:
             },
             token_ids=[int(token_id) for token_id in token_ids],
             capture_mode=self.config.capture_mode,
+            stored_token_strategy=self.config.stored_token_strategy,
             module_globs=list(self.config.module_globs),
         )
         write_json(metadata_path, artifact.model_dump(mode="json"))
@@ -185,3 +194,58 @@ def to_capture_tensor(tensor: Any, capture_dtype: str) -> Any:
     if detached.is_floating_point():
         detached = detached.to(dtype_map[capture_dtype])
     return detached.contiguous()
+
+
+def prepare_capture_tensor(
+    tensor: Any,
+    capture_dtype: str,
+    *,
+    prompt_token_count: int,
+    completion_token_count: int,
+    stored_token_strategy: PoolingStrategy | None,
+) -> Any:
+    compacted = to_capture_tensor(tensor, capture_dtype)
+    if stored_token_strategy is None:
+        return compacted
+    return apply_stored_token_strategy(
+        compacted,
+        prompt_token_count=prompt_token_count,
+        completion_token_count=completion_token_count,
+        strategy=stored_token_strategy,
+    )
+
+
+def apply_stored_token_strategy(
+    tensor: Any,
+    *,
+    prompt_token_count: int,
+    completion_token_count: int,
+    strategy: PoolingStrategy,
+) -> Any:
+    import torch
+
+    if not torch.is_tensor(tensor) or tensor.ndim <= 1:
+        return tensor
+
+    completion_start = prompt_token_count
+    completion_end = prompt_token_count + completion_token_count
+    if strategy == PoolingStrategy.last_completion_token:
+        position = (
+            completion_end - 1
+            if completion_token_count > 0
+            else max(prompt_token_count - 1, 0)
+        )
+        return tensor[position]
+    if strategy == PoolingStrategy.mean_completion:
+        segment = tensor[completion_start:completion_end]
+        return segment.mean(dim=0) if len(segment) > 0 else tensor[max(prompt_token_count - 1, 0)]
+    if strategy == PoolingStrategy.max_completion:
+        segment = tensor[completion_start:completion_end]
+        if len(segment) > 0:
+            return segment.max(dim=0).values
+        return tensor[max(prompt_token_count - 1, 0)]
+    if strategy == PoolingStrategy.last_prompt_token:
+        return tensor[max(prompt_token_count - 1, 0)]
+    if strategy == PoolingStrategy.mean_prompt:
+        return tensor[:prompt_token_count].mean(dim=0)
+    return tensor

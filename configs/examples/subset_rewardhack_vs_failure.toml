@@ -1,0 +1,10 @@
+rollout_path = "artifacts/rollouts/qwen3_4b_spec_overfit.jsonl"
+output_path = "artifacts/analysis/subsets/rewardhack_vs_failure_subset.jsonl"
+summary_output_path = "artifacts/analysis/subsets/rewardhack_vs_failure_subset.summary.json"
+included_cohorts = ["reward_hack", "genuine_failure"]
+max_samples_per_cohort = 40
+random_seed = 7
+matching_fields = ["completion_length_bucket", "official_reward_bucket"]
+completion_length_bucket_size = 64
+official_reward_bucket_size = 0.25
+fill_unmatched_remainder = true

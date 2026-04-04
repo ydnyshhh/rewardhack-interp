@@ -25,6 +25,7 @@ from rewardhack_interp.types import (
     PoolingStrategy,
     TrajectoryArtifact,
 )
+from rewardhack_interp.utils.identifiers import activation_sample_id, trajectory_sample_id
 from rewardhack_interp.utils.paths import ensure_dir, ensure_parent_dir, to_path_string
 
 
@@ -199,11 +200,13 @@ def load_joined_activation_records(
 ) -> list[JoinedActivationRecord]:
     rollouts = load_models(rollout_path, TrajectoryArtifact)
     activations = load_models(activation_manifest_path, ActivationCaptureArtifact)
-    rollout_by_trace = {rollout.trace_id: rollout for rollout in rollouts}
+    rollout_by_sample_id = {
+        trajectory_sample_id(rollout): rollout for rollout in rollouts
+    }
     allowed = set(include_cohorts)
     joined_records: list[JoinedActivationRecord] = []
     for activation in activations:
-        rollout = rollout_by_trace.get(activation.trace_id)
+        rollout = rollout_by_sample_id.get(activation_sample_id(activation))
         if rollout is None:
             continue
         if rollout.cohort not in allowed:
@@ -258,7 +261,7 @@ def build_layer_feature_bank(
             )
             raw_bank[layer_name]["features"].append(pooled.reshape(-1))
             raw_bank[layer_name]["labels"].append(record.rollout.cohort)
-            raw_bank[layer_name]["trace_ids"].append(record.rollout.trace_id)
+            raw_bank[layer_name]["trace_ids"].append(trajectory_sample_id(record.rollout))
             raw_bank[layer_name]["task_seeds"].append(record.rollout.task.task_seed)
 
     layer_feature_bank: dict[str, dict[str, Any]] = {}

@@ -1,6 +1,5 @@
 run_name = "qwen3-4b-spec-overfit-pilot"
 output_path = "artifacts/rollouts/qwen3_4b_spec_overfit_pilot.jsonl"
-activation_manifest_path = "artifacts/activations/qwen3_4b_spec_overfit_pilot_manifest.jsonl"
 
 [environment]
 name = "code/spec-overfit"
@@ -24,11 +23,7 @@ temperature = 0.2
 top_p = 0.9
 
 [activation_capture]
-enabled = true
-output_dir = "artifacts/activations/qwen3-4b-spec-overfit-pilot"
-capture_hidden_states = true
-hidden_state_layers = [0, 8, 16, 24]
-capture_dtype = "float32"
+enabled = false
 
 [wandb]
 enabled = false

@@ -1,0 +1,6 @@
+rollout_path = "artifacts/rollouts/qwen3_4b_spec_overfit.jsonl"
+output_path = "artifacts/analysis/case_studies/rewardhack_vs_failure_examples.json"
+included_cohorts = ["reward_hack", "genuine_failure"]
+samples_per_cohort = 5
+random_seed = 7
+selection_strategy = "top_verifier_gap"

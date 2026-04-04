@@ -34,6 +34,17 @@ class ExperimentOneSplitStrategy(StrEnum):
     row_random_holdout = "row_random_holdout"
 
 
+class SubsetMatchField(StrEnum):
+    completion_length_bucket = "completion_length_bucket"
+    official_reward_bucket = "official_reward_bucket"
+    verifier_gap_bucket = "verifier_gap_bucket"
+
+
+class CaseStudySelectionStrategy(StrEnum):
+    random = "random"
+    top_verifier_gap = "top_verifier_gap"
+
+
 class ActivationCaptureMode(StrEnum):
     replay = "replay"
 
@@ -114,6 +125,7 @@ class TrajectoryArtifact(BaseModel):
 
     run_id: str
     trace_id: str
+    sample_id: str | None = None
     policy_id: str
     model_name_or_path: str
     revision: str | None = None
@@ -132,10 +144,12 @@ class ActivationCaptureArtifact(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     trace_id: str
+    sample_id: str | None = None
     rollout_run_id: str
     source_model_name_or_path: str
     source_adapter_name_or_path: str | None = None
     cohort: CohortLabel
+    completion_index: int | None = None
     tensor_path: str
     prompt_token_count: int
     completion_token_count: int
@@ -143,6 +157,7 @@ class ActivationCaptureArtifact(BaseModel):
     tensor_shapes: dict[str, list[int]]
     token_ids: list[int]
     capture_mode: ActivationCaptureMode
+    stored_token_strategy: PoolingStrategy | None = None
     module_globs: list[str] = Field(default_factory=list)
 
 
@@ -166,6 +181,121 @@ class ProbeArtifact(BaseModel):
     metrics: ProbeMetrics
     label_counts: dict[str, int]
     coefficients_path: str | None = None
+
+
+class HistogramSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    counts: list[int]
+    bin_edges: list[float]
+
+
+class NumericDistributionSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    mean: float | None = None
+    min: float | None = None
+    max: float | None = None
+    percentiles: dict[str, float] = Field(default_factory=dict)
+    histogram: HistogramSummary | None = None
+
+
+class RolloutCohortSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    count: int
+    official_reward: NumericDistributionSummary
+    oracle_reward: NumericDistributionSummary
+    verifier_gap: NumericDistributionSummary
+    completion_length: NumericDistributionSummary
+    false_pass_rate: float
+
+
+class RolloutSummaryArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rollout_path: str
+    total_rows: int
+    cohort_counts: dict[str, int]
+    cohort_summaries: dict[str, RolloutCohortSummary]
+    environment_names: list[str] = Field(default_factory=list)
+    policy_ids: list[str] = Field(default_factory=list)
+    run_ids: list[str] = Field(default_factory=list)
+    plot_paths: dict[str, str] = Field(default_factory=dict)
+
+
+class RolloutSubsetArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    input_rollout_path: str
+    output_rollout_path: str
+    summary_path: str
+    included_cohorts: list[CohortLabel]
+    max_samples_per_cohort: int
+    random_seed: int
+    matching_fields: list[SubsetMatchField] = Field(default_factory=list)
+    fill_unmatched_remainder: bool
+    counts_before: dict[str, int]
+    counts_after: dict[str, int]
+    matched_bucket_counts: dict[str, int] = Field(default_factory=dict)
+    selected_trace_ids: list[str] = Field(default_factory=list)
+    selected_sample_ids: list[str] = Field(default_factory=list)
+
+
+class RepresentativeCaseStudy(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    trace_id: str
+    sample_id: str | None = None
+    task_id: str
+    cohort: CohortLabel
+    official_reward: float
+    oracle_reward: float
+    verifier_gap: float
+    false_pass: bool
+    prompt_summary: str
+    completion_text: str
+    scenario_id: str | None = None
+
+
+class CaseStudyArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rollout_path: str
+    output_path: str
+    samples_per_cohort: int
+    random_seed: int
+    selection_strategy: CaseStudySelectionStrategy
+    included_cohorts: list[CohortLabel]
+    counts_by_cohort: dict[str, int]
+    examples: list[RepresentativeCaseStudy]
+
+
+class LayerwiseBinaryProbeResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    layer_name: str
+    layer_index: int
+    accuracy: float | None = None
+    macro_f1: float | None = None
+    roc_auc: float | None = None
+    n_train: int = 0
+    n_test: int = 0
+    n_examples: int = 0
+    skipped_reason: str | None = None
+
+
+class LayerwiseBinaryProbeArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    activation_manifest_path: str
+    positive_label: CohortLabel
+    negative_label: CohortLabel
+    pooling_strategy: PoolingStrategy
+    label_counts: dict[str, int]
+    results: list[LayerwiseBinaryProbeResult]
+    report_path: str
+    plot_paths: dict[str, str] = Field(default_factory=dict)
 
 
 class RepresentationArtifact(BaseModel):

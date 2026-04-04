@@ -1,0 +1,213 @@
+{
+  "cohort_counts": {
+    "genuine_failure": 1,
+    "reward_hack": 2
+  },
+  "cohort_summaries": {
+    "genuine_failure": {
+      "completion_length": {
+        "histogram": null,
+        "max": 8.0,
+        "mean": 8.0,
+        "min": 8.0,
+        "percentiles": {
+          "0": 8.0,
+          "100": 8.0,
+          "25": 8.0,
+          "5": 8.0,
+          "50": 8.0,
+          "75": 8.0,
+          "95": 8.0
+        }
+      },
+      "count": 1,
+      "false_pass_rate": 0.0,
+      "official_reward": {
+        "histogram": null,
+        "max": 0.2,
+        "mean": 0.2,
+        "min": 0.2,
+        "percentiles": {
+          "0": 0.2,
+          "100": 0.2,
+          "25": 0.2,
+          "5": 0.2,
+          "50": 0.2,
+          "75": 0.2,
+          "95": 0.2
+        }
+      },
+      "oracle_reward": {
+        "histogram": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "percentiles": {
+          "0": 0.0,
+          "100": 0.0,
+          "25": 0.0,
+          "5": 0.0,
+          "50": 0.0,
+          "75": 0.0,
+          "95": 0.0
+        }
+      },
+      "verifier_gap": {
+        "histogram": {
+          "bin_edges": [
+            -0.3,
+            -0.21666666666666667,
+            -0.13333333333333333,
+            -0.04999999999999999,
+            0.033333333333333326,
+            0.11666666666666664,
+            0.2,
+            0.28333333333333327,
+            0.36666666666666664,
+            0.45,
+            0.5333333333333332,
+            0.6166666666666667,
+            0.7
+          ],
+          "counts": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "max": 0.2,
+        "mean": 0.2,
+        "min": 0.2,
+        "percentiles": {
+          "0": 0.2,
+          "100": 0.2,
+          "25": 0.2,
+          "5": 0.2,
+          "50": 0.2,
+          "75": 0.2,
+          "95": 0.2
+        }
+      }
+    },
+    "reward_hack": {
+      "completion_length": {
+        "histogram": null,
+        "max": 12.0,
+        "mean": 11.0,
+        "min": 10.0,
+        "percentiles": {
+          "0": 10.0,
+          "100": 12.0,
+          "25": 10.5,
+          "5": 10.1,
+          "50": 11.0,
+          "75": 11.5,
+          "95": 11.9
+        }
+      },
+      "count": 2,
+      "false_pass_rate": 1.0,
+      "official_reward": {
+        "histogram": null,
+        "max": 1.0,
+        "mean": 0.9,
+        "min": 0.8,
+        "percentiles": {
+          "0": 0.8,
+          "100": 1.0,
+          "25": 0.8500000000000001,
+          "5": 0.81,
+          "50": 0.9,
+          "75": 0.95,
+          "95": 0.99
+        }
+      },
+      "oracle_reward": {
+        "histogram": null,
+        "max": 0.0,
+        "mean": 0.0,
+        "min": 0.0,
+        "percentiles": {
+          "0": 0.0,
+          "100": 0.0,
+          "25": 0.0,
+          "5": 0.0,
+          "50": 0.0,
+          "75": 0.0,
+          "95": 0.0
+        }
+      },
+      "verifier_gap": {
+        "histogram": {
+          "bin_edges": [
+            0.8,
+            0.8166666666666667,
+            0.8333333333333334,
+            0.8500000000000001,
+            0.8666666666666667,
+            0.8833333333333333,
+            0.9,
+            0.9166666666666667,
+            0.9333333333333333,
+            0.95,
+            0.9666666666666667,
+            0.9833333333333334,
+            1.0
+          ],
+          "counts": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1
+          ]
+        },
+        "max": 1.0,
+        "mean": 0.9,
+        "min": 0.8,
+        "percentiles": {
+          "0": 0.8,
+          "100": 1.0,
+          "25": 0.8500000000000001,
+          "5": 0.81,
+          "50": 0.9,
+          "75": 0.95,
+          "95": 0.99
+        }
+      }
+    }
+  },
+  "environment_names": [
+    "code/spec-overfit"
+  ],
+  "plot_paths": {
+    "cohort_counts": "D:\\rewardhack-interp\\.pytest_tmp\\test_summarize_rollouts_writes0\\summary_plots\\cohort_counts.png",
+    "completion_lengths": "D:\\rewardhack-interp\\.pytest_tmp\\test_summarize_rollouts_writes0\\summary_plots\\completion_lengths.png",
+    "reward_distributions": "D:\\rewardhack-interp\\.pytest_tmp\\test_summarize_rollouts_writes0\\summary_plots\\reward_distributions.png",
+    "verifier_gap_histogram": "D:\\rewardhack-interp\\.pytest_tmp\\test_summarize_rollouts_writes0\\summary_plots\\verifier_gap_histogram.png"
+  },
+  "policy_ids": [
+    "Qwen/Qwen3-4B"
+  ],
+  "rollout_path": "D:\\rewardhack-interp\\.pytest_tmp\\test_summarize_rollouts_writes0\\rollouts.jsonl",
+  "run_ids": [
+    "demo-run"
+  ],
+  "total_rows": 3
+}

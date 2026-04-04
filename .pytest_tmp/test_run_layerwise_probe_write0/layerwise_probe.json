@@ -1,0 +1,39 @@
+{
+  "activation_manifest_path": "D:\\rewardhack-interp\\.pytest_tmp\\test_run_layerwise_probe_write0\\manifest.jsonl",
+  "label_counts": {
+    "genuine_failure": 2,
+    "reward_hack": 2
+  },
+  "negative_label": "genuine_failure",
+  "plot_paths": {
+    "accuracy": "D:\\rewardhack-interp\\.pytest_tmp\\test_run_layerwise_probe_write0\\layerwise_probe.accuracy.png",
+    "roc_auc": "D:\\rewardhack-interp\\.pytest_tmp\\test_run_layerwise_probe_write0\\layerwise_probe.roc_auc.png"
+  },
+  "pooling_strategy": "last_completion_token",
+  "positive_label": "reward_hack",
+  "report_path": "D:\\rewardhack-interp\\.pytest_tmp\\test_run_layerwise_probe_write0\\layerwise_probe.json",
+  "results": [
+    {
+      "accuracy": 1.0,
+      "layer_index": 0,
+      "layer_name": "hidden_state.layer_0",
+      "macro_f1": 1.0,
+      "n_examples": 4,
+      "n_test": 2,
+      "n_train": 2,
+      "roc_auc": 1.0,
+      "skipped_reason": null
+    },
+    {
+      "accuracy": 1.0,
+      "layer_index": 1,
+      "layer_name": "hidden_state.layer_1",
+      "macro_f1": 1.0,
+      "n_examples": 4,
+      "n_test": 2,
+      "n_train": 2,
+      "roc_auc": 1.0,
+      "skipped_reason": null
+    }
+  ]
+}

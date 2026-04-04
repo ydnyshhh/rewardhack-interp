@@ -9,11 +9,13 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from rewardhack_interp.types import (
     ActivationCaptureMode,
+    CaseStudySelectionStrategy,
     CohortLabel,
     ExperimentOneSplitStrategy,
     InterventionMode,
     PoolingStrategy,
     RewardSignal,
+    SubsetMatchField,
 )
 
 ConfigT = TypeVar("ConfigT", bound=BaseModel)
@@ -107,9 +109,10 @@ class ActivationCaptureConfig(BaseModel):
     capture_mode: ActivationCaptureMode = ActivationCaptureMode.replay
     capture_hidden_states: bool = True
     include_embedding_state: bool = False
-    hidden_state_layers: list[int] | None = None
+    hidden_state_layers: list[int] | None = Field(default_factory=lambda: [0, 8, 16, 24])
     module_globs: list[str] = Field(default_factory=list)
-    capture_dtype: str = "float32"
+    capture_dtype: str = "bfloat16"
+    stored_token_strategy: PoolingStrategy | None = PoolingStrategy.last_completion_token
 
     @field_validator("capture_dtype")
     @classmethod
@@ -162,6 +165,23 @@ class RolloutConfig(BaseModel):
     wandb: WandbConfig | None = None
 
 
+class ActivationReplayConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_name: str
+    rollout_path: Path
+    model: ModelConfig
+    activation_capture: ActivationCaptureConfig = Field(default_factory=ActivationCaptureConfig)
+    activation_manifest_path: Path = Path("artifacts/activations/activation_manifest.jsonl")
+    wandb: WandbConfig | None = None
+
+    @model_validator(mode="after")
+    def validate_capture_enabled(self) -> ActivationReplayConfig:
+        if not self.activation_capture.enabled:
+            raise ValueError("activation_capture.enabled must be true for replay capture.")
+        return self
+
+
 class FeatureSelectionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -184,6 +204,64 @@ class ProbeConfig(BaseModel):
     max_iter: int = 2000
     regularization_strength: float = 1.0
     wandb: WandbConfig | None = None
+
+
+class LayerwiseProbeConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    activation_manifest_path: Path
+    output_path: Path = Path("artifacts/analysis/layerwise_probe.json")
+    pooling_strategy: PoolingStrategy = PoolingStrategy.last_completion_token
+    positive_label: CohortLabel
+    negative_label: CohortLabel
+    layer_name_pattern: str = "hidden_state.layer_*"
+    layer_names: list[str] | None = None
+    test_size: float = 0.25
+    random_state: int = 0
+    max_iter: int = 2000
+    regularization_strength: float = 1.0
+    wandb: WandbConfig | None = None
+
+
+class RolloutSubsetConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rollout_path: Path
+    output_path: Path
+    included_cohorts: list[CohortLabel]
+    max_samples_per_cohort: int = 40
+    random_seed: int = 0
+    matching_fields: list[SubsetMatchField] = Field(default_factory=list)
+    completion_length_bucket_size: int = 64
+    official_reward_bucket_size: float = 0.25
+    verifier_gap_bucket_size: float = 0.25
+    fill_unmatched_remainder: bool = True
+    summary_output_path: Path | None = None
+
+    @model_validator(mode="after")
+    def validate_subset_config(self) -> RolloutSubsetConfig:
+        if self.max_samples_per_cohort <= 0:
+            raise ValueError("max_samples_per_cohort must be positive.")
+        if len(set(self.included_cohorts)) != len(self.included_cohorts):
+            raise ValueError("included_cohorts must not contain duplicates.")
+        return self
+
+
+class CaseStudyConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rollout_path: Path
+    output_path: Path
+    included_cohorts: list[CohortLabel]
+    samples_per_cohort: int = 5
+    random_seed: int = 0
+    selection_strategy: CaseStudySelectionStrategy = CaseStudySelectionStrategy.top_verifier_gap
+
+    @model_validator(mode="after")
+    def validate_case_studies(self) -> CaseStudyConfig:
+        if self.samples_per_cohort <= 0:
+            raise ValueError("samples_per_cohort must be positive.")
+        return self
 
 
 class RepresentationConfig(BaseModel):
