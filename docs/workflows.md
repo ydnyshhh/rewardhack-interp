@@ -14,6 +14,10 @@ This produces:
 - a summary JSON file
 - optional activation tensor bundles plus an activation manifest
 
+If you only want a quick pipeline shakeout, use
+[`configs/examples/rollout_qwen3_debug.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_debug.toml)
+instead of the larger default example.
+
 To send the run to W&B, add a `[wandb]` block to the rollout config, for example:
 
 ```toml
@@ -82,6 +86,24 @@ Reward modes:
 - `anti_hack`
 
 GRPO runs also support W&B through the same `[wandb]` config block.
+
+The main GRPO example now includes:
+
+- Qwen 3 1.7B as the default first-pass training model
+- a larger training slice instead of a smoke-test-sized run
+- an explicit held-out evaluation seed block
+- post-training evaluation across the base model, saved checkpoints, and final policy
+
+The held-out evaluation artifact reports:
+
+- mean official reward
+- mean oracle reward
+- mean verifier gap
+- false-pass rate
+- cohort counts
+
+If you want a smaller debug pass instead, use
+[`configs/examples/grpo_weak_reward_debug.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_debug.toml).
 
 ## 7. Compare Checkpoints
 

@@ -231,6 +231,11 @@ class CheckpointSummary(BaseModel):
 
     model_name_or_path: str
     adapter_name_or_path: str | None = None
+    checkpoint_path: str | None = None
+    phase_label: str | None = None
+    split_name: str | None = None
+    global_step: int | None = None
+    rollout_path: str | None = None
     mean_official_reward: float
     mean_oracle_reward: float
     mean_verifier_gap: float
@@ -245,6 +250,34 @@ class CheckpointComparisonArtifact(BaseModel):
     environment_profile: str
     task_seeds: list[int]
     summaries: list[CheckpointSummary]
+
+
+class GRPOHeldoutEvaluationArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_name: str
+    reward_signal: RewardSignal
+    evaluation_environment_name: str
+    evaluation_environment_profile: str
+    evaluation_task_seeds: list[int]
+    split_name: str
+    summaries: list[CheckpointSummary]
+
+
+class GRPOTrainingArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_name: str
+    output_dir: str
+    reward_signal: RewardSignal
+    dataset_size: int
+    training_environment_name: str
+    training_environment_profile: str
+    training_task_seeds: list[int]
+    train_metrics: dict[str, Any]
+    reward_trace_output: str | None = None
+    heldout_evaluation_path: str | None = None
+    heldout_evaluation: GRPOHeldoutEvaluationArtifact | None = None
 
 
 class ExperimentOneComparisonResult(BaseModel):

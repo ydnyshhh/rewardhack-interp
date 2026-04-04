@@ -18,6 +18,18 @@ from rewardhack_interp.types import (
 ConfigT = TypeVar("ConfigT", bound=BaseModel)
 
 
+def deterministic_eval_sampling_config() -> SamplingConfig:
+    return SamplingConfig(
+        num_completions=1,
+        max_new_tokens=256,
+        do_sample=False,
+        temperature=1.0,
+        top_p=1.0,
+        top_k=0,
+        repetition_penalty=1.0,
+    )
+
+
 class EnvironmentSpec(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -241,6 +253,19 @@ class LoraTuningConfig(BaseModel):
     )
 
 
+class GRPOHeldoutEvaluationConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    environment: EnvironmentSpec
+    sampling: SamplingConfig = Field(default_factory=deterministic_eval_sampling_config)
+    output_path: Path = Path("artifacts/checkpoints/grpo_heldout_evaluation.json")
+    per_checkpoint_rollout_dir: Path = Path("artifacts/checkpoints/grpo_heldout_rollouts")
+    split_name: str = "heldout_eval"
+    include_base_model: bool = True
+    include_intermediate_checkpoints: bool = True
+    include_final_model: bool = True
+
+
 class GRPORunConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -269,7 +294,30 @@ class GRPORunConfig(BaseModel):
     lora: LoraTuningConfig | None = Field(default_factory=LoraTuningConfig)
     reward_trace_output: Path | None = Path("artifacts/checkpoints/grpo_reward_traces.jsonl")
     trainer_kwargs: dict[str, Any] = Field(default_factory=dict)
+    evaluation: GRPOHeldoutEvaluationConfig | None = None
     wandb: WandbConfig | None = None
+
+    def resolved_training_task_seeds(self) -> list[int]:
+        resolved = self.environment.resolved_task_seeds()
+        if len(resolved) >= self.dataset_size:
+            return resolved[: self.dataset_size]
+        extra_needed = self.dataset_size - len(resolved)
+        next_seed = (max(resolved) + 1) if resolved else self.environment.start_seed
+        return resolved + list(range(next_seed, next_seed + extra_needed))
+
+    @model_validator(mode="after")
+    def validate_heldout_evaluation(self) -> GRPORunConfig:
+        if self.evaluation is None:
+            return self
+        training_seeds = set(self.resolved_training_task_seeds())
+        evaluation_seeds = set(self.evaluation.environment.resolved_task_seeds())
+        overlapping = sorted(training_seeds & evaluation_seeds)
+        if overlapping:
+            raise ValueError(
+                "GRPO evaluation seeds must be disjoint from training seeds. "
+                f"Overlap: {overlapping[:8]}"
+            )
+        return self
 
 
 class CheckpointComparisonConfig(BaseModel):

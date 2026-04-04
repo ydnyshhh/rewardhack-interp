@@ -35,7 +35,7 @@
   Activation patching experiments for matched trajectories.
 
 - `rewardhack_interp.rl`
-  Reward scalarization and GRPO training utilities built directly from `rewardhack-gym` signals.
+  Reward scalarization, GRPO training utilities, and held-out checkpoint evaluation built directly from `rewardhack-gym` signals.
 
 - `rewardhack_interp.tracking`
   Optional Weights & Biases run management, metric flattening, artifact logging, and trainer integration.

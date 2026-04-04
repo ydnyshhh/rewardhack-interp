@@ -49,6 +49,7 @@ Activation capture creates two files per trace:
 - patch trials: JSON
 - checkpoint comparison: JSON
 - Experiment 1: JSON report, probe plot, and matched-pairs JSONL
+- GRPO: training summary JSON plus optional held-out checkpoint evaluation JSON
 
 Every downstream report is designed to stay small and human-inspectable while still pointing back to the originating trace ids.
 
@@ -58,6 +59,12 @@ Experiment 1 reports additionally preserve:
 - semantic-failure counts by cohort
 - false-pass exploit label and exploit-class summaries
 - matched-pair counts by match level
+
+GRPO training summaries additionally preserve:
+
+- the exact training task seeds used after dataset-size expansion
+- the reward-trace output path when enabled
+- held-out checkpoint evaluation summaries for base, intermediate, and final policies
 
 ## W&B Logging
 

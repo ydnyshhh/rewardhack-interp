@@ -114,8 +114,8 @@ def patch_activations_command(config: Path) -> None:
 
 @app.command("train-grpo")
 def train_grpo_command(config: Path) -> None:
-    result = run_grpo(load_config(config, GRPORunConfig))
-    typer.echo(f"Saved GRPO outputs to {result['output_dir']}")
+    artifact = run_grpo(load_config(config, GRPORunConfig))
+    typer.echo(f"Saved GRPO outputs to {artifact.output_dir}")
 
 
 @app.command("compare-checkpoints")

@@ -35,6 +35,7 @@ The project is built around questions like:
 - Logit-lens inspection across saved hidden-state layers
 - Prompt-boundary activation patching experiments on matched examples
 - GRPO training under `official`, `oracle`, `gap_aware`, and `anti_hack` reward definitions
+- Held-out checkpoint evaluation for GRPO runs across base, intermediate, and final policies
 - Checkpoint comparison across base and post-training variants
 - Optional Weights & Biases tracking for rollouts, activation capture, analysis jobs, checkpoint comparison, and GRPO
 
@@ -54,6 +55,13 @@ uv run rewardhack-interp collect-rollouts --config configs/examples/rollout_qwen
 uv run rewardhack-interp train-probe --config configs/examples/probe_false_pass_vs_true_pass.toml
 uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.toml
 ```
+
+Debug-scale configs are available separately at
+[`configs/examples/rollout_qwen3_debug.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_debug.toml)
+and
+[`configs/examples/grpo_weak_reward_debug.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_debug.toml).
+The default `rollout_qwen3.toml` and `grpo_weak_reward.toml` files are intended to be
+research-scale starting points rather than smoke tests.
 
 First serious experiment:
 
@@ -95,5 +103,6 @@ and false-pass exploit metadata so later slice analyses do not need to rebuild t
 - The rollout pipeline is intentionally config-driven so experiments stay reproducible through explicit environment seeds.
 - Activation capture is implemented as replay over the exact prompt/completion token sequence saved with each rollout.
 - The causal patching workflow currently patches prompt-boundary activations for selected layers or modules, which keeps the intervention path inspectable and easy to extend.
+- GRPO example configs now enforce explicit train/held-out seed separation, and the runner writes held-out official reward, oracle reward, verifier gap, false-pass rate, and cohort counts for base, intermediate, and final checkpoints.
 - `rewardhack-gym` is installed directly from GitHub through the project dependency set so the integration stays pinned to the real substrate rather than a local copy.
 - W&B support uses `wandb.init()` context-managed runs and optional artifact logging, following the official W&B SDK guidance.
