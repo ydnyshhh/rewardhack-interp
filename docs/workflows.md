@@ -14,8 +14,8 @@ This produces:
 - a summary JSON file
 - optional activation tensor bundles plus an activation manifest
 
-If you only want a quick pipeline shakeout, use
-[`configs/examples/rollout_qwen3_debug.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_debug.toml)
+If you only want a quick pilot run, use
+[`configs/examples/rollout_qwen3_pilot.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_pilot.toml)
 instead of the larger default example.
 
 To send the run to W&B, add a `[wandb]` block to the rollout config, for example:
@@ -25,7 +25,7 @@ To send the run to W&B, add a `[wandb]` block to the rollout config, for example
 enabled = true
 project = "rewardhack-interp"
 entity = "your-entity"
-group = "qwen3-spec-overfit"
+group = "qwen3-1.7b-spec-overfit"
 mode = "online"
 ```
 
@@ -102,8 +102,8 @@ The held-out evaluation artifact reports:
 - false-pass rate
 - cohort counts
 
-If you want a smaller debug pass instead, use
-[`configs/examples/grpo_weak_reward_debug.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_debug.toml).
+If you want a smaller pilot pass instead, use
+[`configs/examples/grpo_weak_reward_pilot.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_pilot.toml).
 
 ## 7. Compare Checkpoints
 
@@ -120,7 +120,7 @@ The output summarizes official reward, oracle reward, verifier gap, false-pass r
 This is the first full separation experiment:
 
 - environment: `code/patch-verification`
-- model: `Qwen/Qwen3-4B-Instruct`
+- model: `Qwen/Qwen3-1.7B-Instruct`
 - profile: `high`
 - question: are false passes internally separable from true passes?
 
@@ -142,6 +142,13 @@ The experiment runner writes:
 - a probe-accuracy-by-layer plot
 - a matched-pairs JSONL for true-pass vs false-pass comparisons
 - cohort counts, scenario slices, semantic-failure summaries, and false-pass exploit label summaries
+
+If you want a smaller pilot version first, use:
+
+```bash
+uv run rewardhack-interp collect-rollouts --config configs/examples/experiment1_rollout_patch_verification_pilot.toml
+uv run rewardhack-interp run-experiment-1 --config configs/examples/experiment1_patch_verification_pilot.toml
+```
 
 The default comparisons are:
 
