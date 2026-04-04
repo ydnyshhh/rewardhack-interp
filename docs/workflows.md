@@ -38,6 +38,9 @@ uv run rewardhack-interp train-probe --config configs/examples/probe_false_pass_
 ```
 
 This trains a logistic probe on a chosen activation target and pooling strategy.
+The bundled probe example is paired with
+[`configs/examples/rollout_qwen3.toml`](../configs/examples/rollout_qwen3.toml)
+and points at the same activation manifest path that rollout config emits.
 
 ## 3. Compare Representations
 
