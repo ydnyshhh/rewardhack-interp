@@ -123,7 +123,7 @@ The output summarizes official reward, oracle reward, verifier gap, false-pass r
 This is the first full separation experiment:
 
 - environment: `code/patch-verification`
-- model: `Qwen/Qwen3-1.7B-Instruct`
+- model: `Qwen/Qwen3-1.7B`
 - profile: `high`
 - question: are false passes internally separable from true passes?
 

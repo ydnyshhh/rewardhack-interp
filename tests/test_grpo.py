@@ -24,7 +24,7 @@ def build_grpo_config(tmp_path: Path) -> GRPORunConfig:
             num_tasks=4,
         ),
         model=ModelConfig(
-            model_name_or_path="Qwen/Qwen3-1.7B-Instruct",
+            model_name_or_path="Qwen/Qwen3-1.7B",
             torch_dtype="bfloat16",
             device_map="auto",
         ),
@@ -59,7 +59,7 @@ def test_grpo_config_rejects_overlapping_heldout_eval_seeds(tmp_path: Path) -> N
                 num_tasks=4,
             ),
             model=ModelConfig(
-                model_name_or_path="Qwen/Qwen3-1.7B-Instruct",
+            model_name_or_path="Qwen/Qwen3-1.7B",
                 torch_dtype="bfloat16",
                 device_map="auto",
             ),

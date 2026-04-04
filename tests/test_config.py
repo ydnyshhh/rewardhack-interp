@@ -21,7 +21,7 @@ start_seed = 10
 num_tasks = 3
 
 [model]
-model_name_or_path = "Qwen/Qwen3-1.7B-Instruct"
+model_name_or_path = "Qwen/Qwen3-1.7B"
 torch_dtype = "bfloat16"
 device_map = "auto"
 """.strip(),
@@ -31,7 +31,7 @@ device_map = "auto"
     config = load_config(config_path, RolloutConfig)
     assert config.run_name == "demo"
     assert config.environment.resolved_task_seeds() == [10, 11, 12]
-    assert config.model.policy_id == "Qwen/Qwen3-1.7B-Instruct"
+    assert config.model.policy_id == "Qwen/Qwen3-1.7B"
 
 
 def test_experiment_one_config_rejects_overlapping_seed_splits(tmp_path: Path) -> None:
