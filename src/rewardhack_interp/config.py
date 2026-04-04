@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from rewardhack_interp.types import (
     ActivationCaptureMode,
     CohortLabel,
+    ExperimentOneSplitStrategy,
     InterventionMode,
     PoolingStrategy,
     RewardSignal,
@@ -351,6 +352,12 @@ class ExperimentOneConfig(BaseModel):
     pooling_strategy: PoolingStrategy = PoolingStrategy.last_completion_token
     layer_name_pattern: str = "hidden_state.layer_*"
     layer_names: list[str] | None = None
+    split_strategy: ExperimentOneSplitStrategy = ExperimentOneSplitStrategy.task_seed_holdout
+    train_task_seeds: list[int] | None = None
+    eval_task_seeds: list[int] | None = None
+    split_random_seeds: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])
+    confidence_level: float = 0.95
+    bootstrap_repeats: int = 200
     include_cohorts: list[CohortLabel] = Field(
         default_factory=lambda: [
             CohortLabel.genuine_success,
@@ -384,6 +391,25 @@ class ExperimentOneConfig(BaseModel):
         ]
     )
     wandb: WandbConfig | None = None
+
+    @model_validator(mode="after")
+    def validate_split_protocol(self) -> ExperimentOneConfig:
+        if self.confidence_level <= 0.0 or self.confidence_level >= 1.0:
+            raise ValueError("confidence_level must be between 0 and 1.")
+        if self.bootstrap_repeats < 0:
+            raise ValueError("bootstrap_repeats must be non-negative.")
+        if not self.split_random_seeds:
+            raise ValueError("split_random_seeds must contain at least one seed.")
+
+        train_task_seeds = set(self.train_task_seeds or [])
+        eval_task_seeds = set(self.eval_task_seeds or [])
+        overlap = sorted(train_task_seeds & eval_task_seeds)
+        if overlap:
+            raise ValueError(
+                "Experiment 1 train_task_seeds and eval_task_seeds must be disjoint. "
+                f"Overlap: {overlap[:8]}"
+            )
+        return self
 
 
 def load_config(path: str | Path, config_cls: type[ConfigT]) -> ConfigT:

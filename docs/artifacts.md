@@ -59,6 +59,10 @@ Experiment 1 reports additionally preserve:
 - semantic-failure counts by cohort
 - false-pass exploit label and exploit-class summaries
 - matched-pair counts by match level
+- split strategy and any explicit train/eval task-seed partitions
+- repeated split seeds
+- confidence level and bootstrap repeat count
+- per-comparison standard deviations and confidence intervals for probe metrics
 
 GRPO training summaries additionally preserve:
 

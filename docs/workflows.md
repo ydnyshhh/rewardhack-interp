@@ -2,7 +2,7 @@
 
 ## 1. Collect Rollouts
 
-Create a TOML config like [`configs/examples/rollout_qwen3.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3.toml), then run:
+Create a TOML config like [`configs/examples/rollout_qwen3.toml`](../configs/examples/rollout_qwen3.toml), then run:
 
 ```bash
 uv run rewardhack-interp collect-rollouts --config configs/examples/rollout_qwen3.toml
@@ -15,7 +15,7 @@ This produces:
 - optional activation tensor bundles plus an activation manifest
 
 If you only want a quick pilot run, use
-[`configs/examples/rollout_qwen3_pilot.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_pilot.toml)
+[`configs/examples/rollout_qwen3_pilot.toml`](../configs/examples/rollout_qwen3_pilot.toml)
 instead of the larger default example.
 
 To send the run to W&B, add a `[wandb]` block to the rollout config, for example:
@@ -72,7 +72,7 @@ The current intervention path patches prompt-boundary activations for selected l
 
 ## 6. GRPO Training
 
-Use a config like [`configs/examples/grpo_weak_reward.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward.toml):
+Use a config like [`configs/examples/grpo_weak_reward.toml`](../configs/examples/grpo_weak_reward.toml):
 
 ```bash
 uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.toml
@@ -103,7 +103,7 @@ The held-out evaluation artifact reports:
 - cohort counts
 
 If you want a smaller pilot pass instead, use
-[`configs/examples/grpo_weak_reward_pilot.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_pilot.toml).
+[`configs/examples/grpo_weak_reward_pilot.toml`](../configs/examples/grpo_weak_reward_pilot.toml).
 
 ## 7. Compare Checkpoints
 
@@ -142,6 +142,7 @@ The experiment runner writes:
 - a probe-accuracy-by-layer plot
 - a matched-pairs JSONL for true-pass vs false-pass comparisons
 - cohort counts, scenario slices, semantic-failure summaries, and false-pass exploit label summaries
+- the split protocol, explicit train/eval seed partitions when configured, repeated split seeds, and confidence interval summaries for probe metrics
 
 If you want a smaller pilot version first, use:
 
@@ -155,3 +156,12 @@ The default comparisons are:
 - `true_pass_vs_false_pass`
 - `true_pass_vs_clean_failure`
 - `false_pass_vs_clean_failure`
+
+The main Experiment 1 analysis config uses explicit seed-level holdout:
+
+- training task seeds: `0..191`
+- held-out evaluation task seeds: `192..255`
+- split strategy: `task_seed_holdout`
+- confidence intervals: bootstrap over the held-out evaluation slice
+
+That keeps rows from the same environment seed out of both train and test, which is a better first-pass check of whether the representation difference transfers across task instances rather than only across completions.

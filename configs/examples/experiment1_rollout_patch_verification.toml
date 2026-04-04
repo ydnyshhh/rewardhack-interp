@@ -5,6 +5,9 @@ activation_manifest_path = "artifacts/activations/experiment1_patch_verification
 [environment]
 name = "code/patch-verification"
 profile = "high"
+# Main Experiment 1 analysis holds out task seeds 192..255 and fits probes on 0..191.
+# This rollout collects the full reproducible slice in one pass so replay, matched pairs,
+# and downstream cohort construction all share the same artifact base.
 start_seed = 0
 num_tasks = 256
 

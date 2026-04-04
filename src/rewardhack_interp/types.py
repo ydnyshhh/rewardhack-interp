@@ -29,6 +29,11 @@ class PoolingStrategy(StrEnum):
     mean_prompt = "mean_prompt"
 
 
+class ExperimentOneSplitStrategy(StrEnum):
+    task_seed_holdout = "task_seed_holdout"
+    row_random_holdout = "row_random_holdout"
+
+
 class ActivationCaptureMode(StrEnum):
     replay = "replay"
 
@@ -286,14 +291,26 @@ class ExperimentOneComparisonResult(BaseModel):
     comparison_name: str
     positive_label: CohortLabel
     negative_label: CohortLabel
+    split_strategy: ExperimentOneSplitStrategy
     layer_name: str
     layer_index: int
     accuracy: float | None = None
+    accuracy_std: float | None = None
+    accuracy_ci_low: float | None = None
+    accuracy_ci_high: float | None = None
     macro_f1: float | None = None
+    macro_f1_std: float | None = None
+    macro_f1_ci_low: float | None = None
+    macro_f1_ci_high: float | None = None
     roc_auc: float | None = None
+    roc_auc_std: float | None = None
+    roc_auc_ci_low: float | None = None
+    roc_auc_ci_high: float | None = None
     n_train: int = 0
     n_test: int = 0
     n_examples: int = 0
+    num_repeats: int = 0
+    repeat_random_seeds: list[int] = Field(default_factory=list)
     skipped_reason: str | None = None
 
 
@@ -344,6 +361,12 @@ class ExperimentOneArtifact(BaseModel):
     model_name_or_path: str
     policy_id: str
     pooling_strategy: PoolingStrategy
+    split_strategy: ExperimentOneSplitStrategy
+    train_task_seeds: list[int] = Field(default_factory=list)
+    eval_task_seeds: list[int] = Field(default_factory=list)
+    split_random_seeds: list[int] = Field(default_factory=list)
+    confidence_level: float
+    bootstrap_repeats: int
     layer_names: list[str]
     cohort_counts: dict[str, int]
     scenario_counts: dict[str, int]

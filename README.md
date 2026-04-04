@@ -10,7 +10,7 @@ This repository does not re-implement environments. It treats `rewardhack-gym` a
 - RL-facing reward records
 - trace-oriented evaluation
 
-The integration layer in [`src/rewardhack_interp/gym_integration.py`](/D:/rewardhack-interp/src/rewardhack_interp/gym_integration.py)
+The integration layer in [`src/rewardhack_interp/gym_integration.py`](src/rewardhack_interp/gym_integration.py)
 is the main adapter boundary. It owns the normalized rollout record used across the repo:
 `prompt`, `completion`, `env_id`, `family_id`, `task_id`, `official_reward`, `oracle_reward`,
 `verifier_gap`, `false_pass`, and `exploit_labels`.
@@ -57,10 +57,10 @@ uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.t
 ```
 
 Pilot-scale configs are available separately at
-[`configs/examples/rollout_qwen3_pilot.toml`](/D:/rewardhack-interp/configs/examples/rollout_qwen3_pilot.toml),
-[`configs/examples/grpo_weak_reward_pilot.toml`](/D:/rewardhack-interp/configs/examples/grpo_weak_reward_pilot.toml),
+[`configs/examples/rollout_qwen3_pilot.toml`](configs/examples/rollout_qwen3_pilot.toml),
+[`configs/examples/grpo_weak_reward_pilot.toml`](configs/examples/grpo_weak_reward_pilot.toml),
 and
-[`configs/examples/experiment1_rollout_patch_verification_pilot.toml`](/D:/rewardhack-interp/configs/examples/experiment1_rollout_patch_verification_pilot.toml).
+[`configs/examples/experiment1_rollout_patch_verification_pilot.toml`](configs/examples/experiment1_rollout_patch_verification_pilot.toml).
 The unsuffixed example files are now the main 1.7B experiment paths.
 
 First serious experiment:
@@ -73,12 +73,17 @@ uv run rewardhack-interp run-experiment-1 --config configs/examples/experiment1_
 The Experiment 1 runner writes a JSON report, a layerwise probe plot, and a
 matched-pairs JSONL derived from `rewardhack-gym`'s true-pass/false-pass pairing logic.
 The report also preserves scenario-level cohort counts, semantic-failure summaries,
-and false-pass exploit metadata so later slice analyses do not need to rebuild them.
+false-pass exploit metadata, split metadata, repeated-split seeds, and confidence
+interval summaries so later slice analyses do not need to rebuild them.
+The main analysis config now declares an explicit seed-level protocol with
+`train_task_seeds = 0..191` and `eval_task_seeds = 192..255`; the probe stage
+holds out entire task seeds instead of randomly mixing rows from the same seed
+across train and test.
 The main Experiment 1 example now uses `Qwen/Qwen3-1.7B-Instruct`; the smaller
 pilot pair lives in
-[`configs/examples/experiment1_rollout_patch_verification_pilot.toml`](/D:/rewardhack-interp/configs/examples/experiment1_rollout_patch_verification_pilot.toml)
+[`configs/examples/experiment1_rollout_patch_verification_pilot.toml`](configs/examples/experiment1_rollout_patch_verification_pilot.toml)
 and
-[`configs/examples/experiment1_patch_verification_pilot.toml`](/D:/rewardhack-interp/configs/examples/experiment1_patch_verification_pilot.toml).
+[`configs/examples/experiment1_patch_verification_pilot.toml`](configs/examples/experiment1_patch_verification_pilot.toml).
 
 ## Command Surface
 
@@ -95,19 +100,20 @@ and
 
 ## Project Layout
 
-- [`src/rewardhack_interp`](/D:/rewardhack-interp/src/rewardhack_interp): library code
-- [`configs/examples`](/D:/rewardhack-interp/configs/examples): example TOML configs
-- [`docs/architecture.md`](/D:/rewardhack-interp/docs/architecture.md): module layout and design decisions
-- [`docs/workflows.md`](/D:/rewardhack-interp/docs/workflows.md): end-to-end workflow guide
-- [`docs/artifacts.md`](/D:/rewardhack-interp/docs/artifacts.md): saved artifact formats
-- [`artifacts/README.md`](/D:/rewardhack-interp/artifacts/README.md): output directory guide
-- [`tests`](/D:/rewardhack-interp/tests): unit tests for configs, reward logic, and analysis helpers
+- [`src/rewardhack_interp`](src/rewardhack_interp): library code
+- [`configs/examples`](configs/examples): example TOML configs
+- [`docs/architecture.md`](docs/architecture.md): module layout and design decisions
+- [`docs/workflows.md`](docs/workflows.md): end-to-end workflow guide
+- [`docs/artifacts.md`](docs/artifacts.md): saved artifact formats
+- [`artifacts/README.md`](artifacts/README.md): output directory guide
+- [`tests`](tests): unit tests for configs, reward logic, and analysis helpers
 
 ## Notes
 
 - The rollout pipeline is intentionally config-driven so experiments stay reproducible through explicit environment seeds.
 - Activation capture is implemented as replay over the exact prompt/completion token sequence saved with each rollout.
 - The causal patching workflow currently patches prompt-boundary activations for selected layers or modules, which keeps the intervention path inspectable and easy to extend.
+- Experiment 1 now defaults to seed-level holdout rather than row-level random splitting, and the report stores bootstrap confidence intervals for the layerwise probe metrics.
 - GRPO example configs now enforce explicit train/held-out seed separation, and the runner writes held-out official reward, oracle reward, verifier gap, false-pass rate, and cohort counts for base, intermediate, and final checkpoints.
 - `rewardhack-gym` is installed directly from GitHub through the project dependency set so the integration stays pinned to the real substrate rather than a local copy.
 - W&B support uses `wandb.init()` context-managed runs and optional artifact logging, following the official W&B SDK guidance.
