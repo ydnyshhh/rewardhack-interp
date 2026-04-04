@@ -245,3 +245,82 @@ class CheckpointComparisonArtifact(BaseModel):
     environment_profile: str
     task_seeds: list[int]
     summaries: list[CheckpointSummary]
+
+
+class ExperimentOneComparisonResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    comparison_name: str
+    positive_label: CohortLabel
+    negative_label: CohortLabel
+    layer_name: str
+    layer_index: int
+    accuracy: float | None = None
+    macro_f1: float | None = None
+    roc_auc: float | None = None
+    n_train: int = 0
+    n_test: int = 0
+    n_examples: int = 0
+    skipped_reason: str | None = None
+
+
+class ExperimentOneRepresentationResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    pair_name: str
+    left_label: CohortLabel
+    right_label: CohortLabel
+    layer_name: str
+    layer_index: int
+    centroid_distance: float | None = None
+    linear_cka: float | None = None
+    left_count: int = 0
+    right_count: int = 0
+
+
+class ExperimentOneClusteringResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    layer_name: str
+    layer_index: int
+    n_clusters: int
+    purity: float | None = None
+    silhouette_score: float | None = None
+    label_histograms: dict[str, dict[str, int]] = Field(default_factory=dict)
+    n_examples: int = 0
+    skipped_reason: str | None = None
+
+
+class ExperimentOneMatchedPairSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    match_level: str
+    n_pairs: int
+    n_pair_groups: int
+
+
+class ExperimentOneArtifact(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experiment_name: str
+    rollout_path: str
+    activation_manifest_path: str
+    report_path: str
+    environment_name: str
+    environment_profile: str | None = None
+    model_name_or_path: str
+    policy_id: str
+    pooling_strategy: PoolingStrategy
+    layer_names: list[str]
+    cohort_counts: dict[str, int]
+    scenario_counts: dict[str, int]
+    cohort_counts_by_scenario: dict[str, dict[str, int]]
+    semantic_failure_counts_by_cohort: dict[str, dict[str, int]]
+    false_pass_exploit_label_counts: dict[str, int]
+    false_pass_exploit_class_counts: dict[str, int]
+    matched_pair_summaries: list[ExperimentOneMatchedPairSummary]
+    comparison_results: list[ExperimentOneComparisonResult]
+    representation_results: list[ExperimentOneRepresentationResult]
+    clustering_results: list[ExperimentOneClusteringResult]
+    matched_pairs_path: str | None = None
+    plot_path: str | None = None

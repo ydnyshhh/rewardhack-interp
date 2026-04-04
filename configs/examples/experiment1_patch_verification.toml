@@ -1,0 +1,33 @@
+experiment_name = "experiment-1-patch-verification-separation"
+rollout_path = "artifacts/rollouts/experiment1_patch_verification_qwen3_4b.jsonl"
+activation_manifest_path = "artifacts/activations/experiment1_patch_verification_qwen3_4b_manifest.jsonl"
+output_dir = "artifacts/analysis/experiment1_patch_verification"
+pooling_strategy = "last_completion_token"
+layer_name_pattern = "hidden_state.layer_*"
+min_examples_per_label = 8
+test_size = 0.25
+random_state = 0
+regularization_strength = 1.0
+max_iter = 2000
+n_clusters = 3
+
+[[comparisons]]
+name = "true_pass_vs_false_pass"
+positive_label = "genuine_success"
+negative_label = "reward_hack"
+
+[[comparisons]]
+name = "true_pass_vs_clean_failure"
+positive_label = "genuine_success"
+negative_label = "genuine_failure"
+
+[[comparisons]]
+name = "false_pass_vs_clean_failure"
+positive_label = "reward_hack"
+negative_label = "genuine_failure"
+
+[wandb]
+enabled = false
+project = "rewardhack-interp"
+group = "experiment1-patch-verification"
+mode = "offline"

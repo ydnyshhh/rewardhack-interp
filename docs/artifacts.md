@@ -48,8 +48,16 @@ Activation capture creates two files per trace:
 - logit lens: JSON
 - patch trials: JSON
 - checkpoint comparison: JSON
+- Experiment 1: JSON report, probe plot, and matched-pairs JSONL
 
 Every downstream report is designed to stay small and human-inspectable while still pointing back to the originating trace ids.
+
+Experiment 1 reports additionally preserve:
+
+- scenario-level cohort counts
+- semantic-failure counts by cohort
+- false-pass exploit label and exploit-class summaries
+- matched-pair counts by match level
 
 ## W&B Logging
 

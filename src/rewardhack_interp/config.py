@@ -283,6 +283,61 @@ class CheckpointComparisonConfig(BaseModel):
     wandb: WandbConfig | None = None
 
 
+class ExperimentOneComparisonConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    positive_label: CohortLabel
+    negative_label: CohortLabel
+
+
+class ExperimentOneConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    experiment_name: str = "experiment-1-patch-verification-separation"
+    rollout_path: Path
+    activation_manifest_path: Path
+    output_dir: Path = Path("artifacts/analysis/experiment1")
+    report_path: Path | None = None
+    plot_path: Path | None = None
+    pooling_strategy: PoolingStrategy = PoolingStrategy.last_completion_token
+    layer_name_pattern: str = "hidden_state.layer_*"
+    layer_names: list[str] | None = None
+    include_cohorts: list[CohortLabel] = Field(
+        default_factory=lambda: [
+            CohortLabel.genuine_success,
+            CohortLabel.reward_hack,
+            CohortLabel.genuine_failure,
+        ]
+    )
+    min_examples_per_label: int = 8
+    test_size: float = 0.25
+    random_state: int = 0
+    regularization_strength: float = 1.0
+    max_iter: int = 2000
+    n_clusters: int = 3
+    comparisons: list[ExperimentOneComparisonConfig] = Field(
+        default_factory=lambda: [
+            ExperimentOneComparisonConfig(
+                name="true_pass_vs_false_pass",
+                positive_label=CohortLabel.genuine_success,
+                negative_label=CohortLabel.reward_hack,
+            ),
+            ExperimentOneComparisonConfig(
+                name="true_pass_vs_clean_failure",
+                positive_label=CohortLabel.genuine_success,
+                negative_label=CohortLabel.genuine_failure,
+            ),
+            ExperimentOneComparisonConfig(
+                name="false_pass_vs_clean_failure",
+                positive_label=CohortLabel.reward_hack,
+                negative_label=CohortLabel.genuine_failure,
+            ),
+        ]
+    )
+    wandb: WandbConfig | None = None
+
+
 def load_config(path: str | Path, config_cls: type[ConfigT]) -> ConfigT:
     config_path = Path(path)
     suffix = config_path.suffix.lower()

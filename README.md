@@ -55,6 +55,18 @@ uv run rewardhack-interp train-probe --config configs/examples/probe_false_pass_
 uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.toml
 ```
 
+First serious experiment:
+
+```bash
+uv run rewardhack-interp collect-rollouts --config configs/examples/experiment1_rollout_patch_verification.toml
+uv run rewardhack-interp run-experiment-1 --config configs/examples/experiment1_patch_verification.toml
+```
+
+The Experiment 1 runner writes a JSON report, a layerwise probe plot, and a
+matched-pairs JSONL derived from `rewardhack-gym`'s true-pass/false-pass pairing logic.
+The report also preserves scenario-level cohort counts, semantic-failure summaries,
+and false-pass exploit metadata so later slice analyses do not need to rebuild them.
+
 ## Command Surface
 
 - `uv run rewardhack-interp collect-rollouts --config <path>`
@@ -66,6 +78,7 @@ uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.t
 - `uv run rewardhack-interp patch-activations --config <path>`
 - `uv run rewardhack-interp train-grpo --config <path>`
 - `uv run rewardhack-interp compare-checkpoints --config <path>`
+- `uv run rewardhack-interp run-experiment-1 --config <path>`
 
 ## Project Layout
 

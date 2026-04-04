@@ -92,3 +92,37 @@ uv run rewardhack-interp compare-checkpoints --config path/to/checkpoints.toml
 ```
 
 The output summarizes official reward, oracle reward, verifier gap, false-pass rate, and cohort counts for each checkpoint.
+
+## 8. Experiment 1
+
+This is the first full separation experiment:
+
+- environment: `code/patch-verification`
+- model: `Qwen/Qwen3-4B-Instruct`
+- profile: `high`
+- question: are false passes internally separable from true passes?
+
+Step 1, collect rollouts and activations:
+
+```bash
+uv run rewardhack-interp collect-rollouts --config configs/examples/experiment1_rollout_patch_verification.toml
+```
+
+Step 2, run the layerwise analysis:
+
+```bash
+uv run rewardhack-interp run-experiment-1 --config configs/examples/experiment1_patch_verification.toml
+```
+
+The experiment runner writes:
+
+- a report JSON with layerwise probe, centroid-distance, CKA, and clustering results
+- a probe-accuracy-by-layer plot
+- a matched-pairs JSONL for true-pass vs false-pass comparisons
+- cohort counts, scenario slices, semantic-failure summaries, and false-pass exploit label summaries
+
+The default comparisons are:
+
+- `true_pass_vs_false_pass`
+- `true_pass_vs_clean_failure`
+- `false_pass_vs_clean_failure`

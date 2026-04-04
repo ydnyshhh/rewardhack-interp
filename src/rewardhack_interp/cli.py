@@ -16,6 +16,7 @@ from rewardhack_interp.checkpoints import compare_checkpoints
 from rewardhack_interp.config import (
     CheckpointComparisonConfig,
     ClusteringConfig,
+    ExperimentOneConfig,
     GRPORunConfig,
     LogitLensConfig,
     PatchConfig,
@@ -24,6 +25,7 @@ from rewardhack_interp.config import (
     RolloutConfig,
     load_config,
 )
+from rewardhack_interp.experiments import run_experiment_one
 from rewardhack_interp.io import append_jsonl, load_models
 from rewardhack_interp.modeling import load_qwen_model
 from rewardhack_interp.rl.grpo import run_grpo
@@ -120,6 +122,16 @@ def train_grpo_command(config: Path) -> None:
 def compare_checkpoints_command(config: Path) -> None:
     artifact = compare_checkpoints(load_config(config, CheckpointComparisonConfig))
     typer.echo(f"Compared {len(artifact.summaries)} checkpoints")
+
+
+@app.command("run-experiment-1")
+def run_experiment_one_command(config: Path) -> None:
+    artifact = run_experiment_one(load_config(config, ExperimentOneConfig))
+    typer.echo(
+        "Wrote Experiment 1 report to "
+        f"{artifact.report_path}, plot to {artifact.plot_path}, "
+        f"and matched pairs to {artifact.matched_pairs_path}"
+    )
 
 
 def main() -> None:
