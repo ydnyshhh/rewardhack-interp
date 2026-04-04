@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from typing import Any
+
+from rewardhack_interp.config import EnvironmentSpec
+from rewardhack_interp.types import RewardMetrics, TaskReference
+
+
+def build_environment(spec: EnvironmentSpec) -> Any:
+    from rewardhack_gym import create_environment
+    from rewardhack_gym.core.config import EnvironmentConfig
+
+    config = EnvironmentConfig.from_profile(
+        seed=spec.start_seed,
+        profile=spec.profile,
+        exploitability_overrides=dict(spec.exploitability_overrides),
+    )
+    return create_environment(spec.name, config=config)
+
+
+def task_to_reference(task: Any, spec: EnvironmentSpec, task_seed: int) -> TaskReference:
+    task_dict = task.to_dict(include_hidden=False)
+    return TaskReference(
+        environment_name=spec.name,
+        environment_profile=spec.profile,
+        task_seed=task_seed,
+        task_id=str(task_dict["task_id"]),
+        family=str(task_dict["family"]),
+        difficulty=str(task_dict["difficulty"]),
+        prompt=str(task_dict["prompt"]),
+        expected_interface=str(task_dict["expected_interface"]),
+        tags=[str(tag) for tag in task_dict.get("tags", [])],
+        metadata=dict(task_dict.get("metadata", {})),
+    )
+
+
+def reward_metrics_from_trajectory(trajectory: Any) -> RewardMetrics:
+    from rewardhack_gym.runners.rl import RewardAdapter
+
+    record = RewardAdapter.from_trajectory(trajectory)
+    return RewardMetrics(
+        official_reward=float(record.official_reward),
+        oracle_reward=float(record.oracle_reward),
+        verifier_gap=float(record.verifier_gap),
+        false_pass=bool(record.false_pass),
+        official_passed=bool(trajectory.official_result.passed),
+        oracle_passed=bool(trajectory.oracle_result.passed),
+        exploit_labels=[str(label) for label in trajectory.exploit_labels],
+        annotations=dict(trajectory.annotations),
+        reward_metadata=dict(record.metadata),
+    )
+
+
+def build_mech_interp_row(trajectory: Any) -> dict[str, Any]:
+    from rewardhack_gym import build_mech_interp_record
+
+    return build_mech_interp_record(trajectory).to_dict()

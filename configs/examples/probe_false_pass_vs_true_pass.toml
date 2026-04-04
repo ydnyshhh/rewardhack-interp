@@ -1,0 +1,13 @@
+output_path = "artifacts/analysis/probe_false_pass_vs_true_pass.json"
+positive_labels = ["reward_hack"]
+negative_labels = ["genuine_success"]
+test_size = 0.25
+random_state = 0
+max_iter = 2000
+regularization_strength = 1.0
+
+[features]
+activation_manifest_path = "artifacts/activations/qwen3_spec_overfit_manifest.jsonl"
+target_names = ["hidden_state.layer_24"]
+pooling_strategy = "last_completion_token"
+allowed_cohorts = ["reward_hack", "genuine_success"]

@@ -1,0 +1,41 @@
+# Artifact Formats
+
+## Rollouts
+
+Rollouts are stored as JSONL. Each row is a `TrajectoryArtifact` with:
+
+- environment/task reference
+- rendered prompt
+- completion text and token ids
+- raw `rewardhack-gym` trajectory payload
+- direct reward fields:
+  - `official_reward`
+  - `oracle_reward`
+  - `verifier_gap`
+  - `false_pass`
+- cohort label
+- mech-interp row keyed by `trace_id`
+
+## Activations
+
+Activation capture creates two files per trace:
+
+- `<trace_id>.json`
+  Metadata describing tensor names, shapes, cohort, token counts, and source model info
+- `<trace_id>.pt`
+  `torch.save` bundle containing:
+  - selected hidden states
+  - selected module outputs
+  - token ids
+  - attention mask
+
+## Analysis Outputs
+
+- probe reports: JSON plus `.npy` coefficients
+- representation comparison: JSON
+- clustering: JSON
+- logit lens: JSON
+- patch trials: JSON
+- checkpoint comparison: JSON
+
+Every downstream report is designed to stay small and human-inspectable while still pointing back to the originating trace ids.

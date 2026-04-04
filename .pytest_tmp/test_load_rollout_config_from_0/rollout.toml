@@ -1,0 +1,13 @@
+run_name = "demo"
+output_path = "artifacts/rollouts/demo.jsonl"
+
+[environment]
+name = "code/spec-overfit"
+profile = "high"
+start_seed = 10
+num_tasks = 3
+
+[model]
+model_name_or_path = "Qwen/Qwen3-4B-Instruct"
+torch_dtype = "bfloat16"
+device_map = "auto"

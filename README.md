@@ -1,0 +1,77 @@
+# rewardhack-interp
+
+`rewardhack-interp` is a uv-only Python research project for studying reward hacking in language models through mechanistic interpretability on top of [`rewardhack-gym`](https://github.com/ydnyshhh/rewardhack-gym).
+
+This repository does not re-implement environments. It treats `rewardhack-gym` as the substrate for:
+
+- task sampling
+- official verifier and oracle scoring
+- exploit surfaces and annotations
+- RL-facing reward records
+- trace-oriented evaluation
+
+The purpose of this repo is to let you run Qwen 3 models on those tasks, collect and label trajectories, capture activations, run internal-state analyses, intervene causally, and compare checkpoints before and after GRPO-style optimization.
+
+## Scientific Focus
+
+The project is built around questions like:
+
+- What internal signatures separate genuine solving from high-official / low-oracle reward hacking?
+- At which layers do false passes become separable from true passes?
+- How do internal representations change after training on weak verifier reward instead of oracle reward?
+- Can activation patching move a reward-hacking trajectory toward a genuine solution?
+
+## What It Supports
+
+- Rollout collection against `rewardhack-gym` tasks with saved trajectories and direct access to `official_reward`, `oracle_reward`, `verifier_gap`, and `false_pass`
+- Cohort construction for `genuine_success`, `genuine_failure`, `reward_hack`, and `oracle_only_pass`
+- Hidden-state and module-output capture for Qwen 3 replayed rollouts
+- Probe training, clustering, centroid-distance comparison, and linear CKA-style representation analysis
+- Logit-lens inspection across saved hidden-state layers
+- Prompt-boundary activation patching experiments on matched examples
+- GRPO training under `official`, `oracle`, `gap_aware`, and `anti_hack` reward definitions
+- Checkpoint comparison across base and post-training variants
+
+## Quick Start
+
+```bash
+uv sync
+uv run rewardhack-interp --help
+```
+
+Example workflows:
+
+```bash
+uv run rewardhack-interp collect-rollouts --config configs/examples/rollout_qwen3.toml
+uv run rewardhack-interp train-probe --config configs/examples/probe_false_pass_vs_true_pass.toml
+uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.toml
+```
+
+## Command Surface
+
+- `uv run rewardhack-interp collect-rollouts --config <path>`
+- `uv run rewardhack-interp capture-activations --config <rollout-config> --rollouts <jsonl>`
+- `uv run rewardhack-interp train-probe --config <path>`
+- `uv run rewardhack-interp compare-representations --config <path>`
+- `uv run rewardhack-interp cluster-activations --config <path>`
+- `uv run rewardhack-interp logit-lens --config <path>`
+- `uv run rewardhack-interp patch-activations --config <path>`
+- `uv run rewardhack-interp train-grpo --config <path>`
+- `uv run rewardhack-interp compare-checkpoints --config <path>`
+
+## Project Layout
+
+- [`src/rewardhack_interp`](/D:/rewardhack-interp/src/rewardhack_interp): library code
+- [`configs/examples`](/D:/rewardhack-interp/configs/examples): example TOML configs
+- [`docs/architecture.md`](/D:/rewardhack-interp/docs/architecture.md): module layout and design decisions
+- [`docs/workflows.md`](/D:/rewardhack-interp/docs/workflows.md): end-to-end workflow guide
+- [`docs/artifacts.md`](/D:/rewardhack-interp/docs/artifacts.md): saved artifact formats
+- [`artifacts/README.md`](/D:/rewardhack-interp/artifacts/README.md): output directory guide
+- [`tests`](/D:/rewardhack-interp/tests): unit tests for configs, reward logic, and analysis helpers
+
+## Notes
+
+- The rollout pipeline is intentionally config-driven so experiments stay reproducible through explicit environment seeds.
+- Activation capture is implemented as replay over the exact prompt/completion token sequence saved with each rollout.
+- The causal patching workflow currently patches prompt-boundary activations for selected layers or modules, which keeps the intervention path inspectable and easy to extend.
+- `rewardhack-gym` is installed directly from GitHub through the project dependency set so the integration stays pinned to the real substrate rather than a local copy.

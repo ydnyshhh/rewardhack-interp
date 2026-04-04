@@ -1,0 +1,33 @@
+run_name = "qwen3-grpo-official"
+output_dir = "artifacts/checkpoints/qwen3-grpo-official"
+reward_signal = "official"
+dataset_size = 64
+max_prompt_length = 1024
+max_completion_length = 256
+num_generations = 4
+per_device_train_batch_size = 1
+gradient_accumulation_steps = 8
+learning_rate = 5e-6
+num_train_epochs = 1.0
+logging_steps = 1
+save_steps = 20
+bf16 = true
+gradient_checkpointing = true
+beta = 0.0
+
+[environment]
+name = "code/spec-overfit"
+profile = "high"
+start_seed = 0
+num_tasks = 64
+
+[model]
+model_name_or_path = "Qwen/Qwen3-4B-Instruct"
+torch_dtype = "bfloat16"
+device_map = "auto"
+
+[lora]
+rank = 16
+alpha = 32
+dropout = 0.05
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
