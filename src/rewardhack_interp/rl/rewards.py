@@ -37,7 +37,7 @@ def make_reward_function(config: GRPORunConfig) -> Any:
         rewards: list[float] = []
         reward_rows: list[dict[str, Any]] = []
         for completion, seed in zip(completions, task_seed, strict=True):
-            completion_text = _completion_to_text(completion)
+            completion_text = completion_to_text(completion)
             task = environment.sample_task(seed=int(seed))
             trajectory = environment.evaluate_output(
                 task,
@@ -74,7 +74,7 @@ def make_reward_function(config: GRPORunConfig) -> Any:
     return reward_func
 
 
-def _completion_to_text(completion: Any) -> str:
+def completion_to_text(completion: Any) -> str:
     if isinstance(completion, str):
         return completion
     if isinstance(completion, list):

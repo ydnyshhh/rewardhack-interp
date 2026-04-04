@@ -31,3 +31,9 @@ rank = 16
 alpha = 32
 dropout = 0.05
 target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+[wandb]
+enabled = false
+project = "rewardhack-interp"
+group = "qwen3-grpo-official"
+mode = "offline"

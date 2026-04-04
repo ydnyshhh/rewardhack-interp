@@ -9,61 +9,70 @@ from rewardhack_interp.config import PatchConfig
 from rewardhack_interp.gym_integration import build_environment, reward_metrics_from_trajectory
 from rewardhack_interp.io import read_json, read_jsonl, write_json
 from rewardhack_interp.modeling import load_qwen_model
+from rewardhack_interp.tracking import start_wandb_run
 from rewardhack_interp.types import PatchTrialArtifact, TrajectoryArtifact
 
 
 def run_patch_experiment(config: PatchConfig) -> PatchTrialArtifact:
-    source_record = _load_rollout_record(config.source_rollout_path, config.source_trace_id)
-    donor_record = _load_rollout_record(config.donor_rollout_path, config.donor_trace_id)
-    source_activation = load_activation_artifact(config.source_activation_path)
-    donor_activation = load_activation_artifact(config.donor_activation_path)
-    _ = source_activation
-    donor_tensors = load_activation_tensors(donor_activation)
+    with start_wandb_run(
+        wandb_config=config.wandb,
+        run_name=Path(config.output_path).stem,
+        job_type="activation_patching",
+        config_payload=config.model_dump(mode="json"),
+    ) as tracker:
+        source_record = load_rollout_record(config.source_rollout_path, config.source_trace_id)
+        donor_record = load_rollout_record(config.donor_rollout_path, config.donor_trace_id)
+        source_activation = load_activation_artifact(config.source_activation_path)
+        donor_activation = load_activation_artifact(config.donor_activation_path)
+        _ = source_activation
+        donor_tensors = load_activation_tensors(donor_activation)
 
-    model_bundle = load_qwen_model(config.model)
-    environment = build_environment(config.environment)
-    source_task = environment.sample_task(seed=source_record.task.task_seed)
+        model_bundle = load_qwen_model(config.model)
+        environment = build_environment(config.environment)
+        source_task = environment.sample_task(seed=source_record.task.task_seed)
 
-    patched_completion = _generate_with_activation_patch(
-        model=model_bundle.model,
-        tokenizer=model_bundle.tokenizer,
-        prompt_token_ids=source_record.generation.prompt_token_ids,
-        donor_tensors=donor_tensors,
-        donor_prompt_token_count=donor_activation.prompt_token_count,
-        layer_names=config.layer_names,
-        max_new_tokens=config.max_new_tokens,
-        do_sample=config.do_sample,
-        temperature=config.temperature,
-        top_p=config.top_p,
-    )
-    patched_trajectory = environment.evaluate_output(
-        source_task,
-        patched_completion,
-        policy_id=config.model.policy_id,
-        annotations={"causal_patch": True, "donor_trace_id": donor_record.trace_id},
-    )
-    patched_metrics = reward_metrics_from_trajectory(patched_trajectory)
-    patched_cohort = classify_cohort(patched_metrics)
+        patched_completion = generate_with_activation_patch(
+            model=model_bundle.model,
+            tokenizer=model_bundle.tokenizer,
+            prompt_token_ids=source_record.generation.prompt_token_ids,
+            donor_tensors=donor_tensors,
+            donor_prompt_token_count=donor_activation.prompt_token_count,
+            layer_names=config.layer_names,
+            max_new_tokens=config.max_new_tokens,
+            do_sample=config.do_sample,
+            temperature=config.temperature,
+            top_p=config.top_p,
+        )
+        patched_trajectory = environment.evaluate_output(
+            source_task,
+            patched_completion,
+            policy_id=config.model.policy_id,
+            annotations={"causal_patch": True, "donor_trace_id": donor_record.trace_id},
+        )
+        patched_metrics = reward_metrics_from_trajectory(patched_trajectory)
+        patched_cohort = classify_cohort(patched_metrics)
 
-    artifact = PatchTrialArtifact(
-        source_trace_id=source_record.trace_id,
-        donor_trace_id=donor_record.trace_id,
-        mode=config.mode,
-        layer_names=list(config.layer_names),
-        baseline_completion=source_record.generation.completion_text,
-        patched_completion=patched_completion,
-        baseline_official_reward=source_record.reward_metrics.official_reward,
-        baseline_oracle_reward=source_record.reward_metrics.oracle_reward,
-        patched_official_reward=patched_metrics.official_reward,
-        patched_oracle_reward=patched_metrics.oracle_reward,
-        baseline_cohort=source_record.cohort,
-        patched_cohort=patched_cohort,
-    )
-    write_json(config.output_path, artifact.model_dump(mode="json"))
-    return artifact
+        artifact = PatchTrialArtifact(
+            source_trace_id=source_record.trace_id,
+            donor_trace_id=donor_record.trace_id,
+            mode=config.mode,
+            layer_names=list(config.layer_names),
+            baseline_completion=source_record.generation.completion_text,
+            patched_completion=patched_completion,
+            baseline_official_reward=source_record.reward_metrics.official_reward,
+            baseline_oracle_reward=source_record.reward_metrics.oracle_reward,
+            patched_official_reward=patched_metrics.official_reward,
+            patched_oracle_reward=patched_metrics.oracle_reward,
+            baseline_cohort=source_record.cohort,
+            patched_cohort=patched_cohort,
+        )
+        write_json(config.output_path, artifact.model_dump(mode="json"))
+        tracker.log_summary(artifact.model_dump(mode="json"))
+        tracker.log_path(config.output_path, artifact_type="patch-trial")
+        return artifact
 
 
-def _load_rollout_record(path: Path, trace_id: str | None) -> TrajectoryArtifact:
+def load_rollout_record(path: Path, trace_id: str | None) -> TrajectoryArtifact:
     if path.suffix.lower() == ".json":
         return TrajectoryArtifact.model_validate(read_json(path))
     rows = [TrajectoryArtifact.model_validate(row) for row in read_jsonl(path)]
@@ -77,7 +86,7 @@ def _load_rollout_record(path: Path, trace_id: str | None) -> TrajectoryArtifact
     raise KeyError(f"Trace id {trace_id!r} was not found in {path}.")
 
 
-def _generate_with_activation_patch(
+def generate_with_activation_patch(
     *,
     model: Any,
     tokenizer: Any,
@@ -96,7 +105,7 @@ def _generate_with_activation_patch(
     generated_ids = list(prompt_token_ids)
     for _step in range(max_new_tokens):
         input_ids = torch.tensor([generated_ids], dtype=torch.long, device=device)
-        hooks = _register_patch_hooks(
+        hooks = register_patch_hooks(
             model=model,
             layer_names=layer_names,
             donor_tensors=donor_tensors,
@@ -112,7 +121,7 @@ def _generate_with_activation_patch(
 
         if do_sample:
             probabilities = torch.softmax(logits / max(temperature, 1e-5), dim=-1)
-            next_token = _sample_top_p(probabilities, top_p=top_p)
+            next_token = sample_top_p(probabilities, top_p=top_p)
         else:
             next_token = torch.argmax(logits, dim=-1)
         next_token_id = int(next_token[0].item())
@@ -123,7 +132,7 @@ def _generate_with_activation_patch(
     return tokenizer.decode(completion_ids, skip_special_tokens=True)
 
 
-def _register_patch_hooks(
+def register_patch_hooks(
     *,
     model: Any,
     layer_names: list[str],
@@ -134,7 +143,7 @@ def _register_patch_hooks(
     hooks: list[Any] = []
     layer_map = {name: module for name, module in model.named_modules()}
     for layer_name in layer_names:
-        module_name = _resolve_patch_module_name(layer_name)
+        module_name = resolve_patch_module_name(layer_name)
         if module_name not in layer_map or layer_name not in donor_tensors:
             continue
         donor_tensor = donor_tensors[layer_name]
@@ -146,7 +155,7 @@ def _register_patch_hooks(
             *,
             cached_donor: Any = donor_tensor,
         ) -> Any:
-            return _patch_output(
+            return patch_output(
                 output=output,
                 donor_tensor=cached_donor,
                 source_prompt_token_count=source_prompt_token_count,
@@ -157,7 +166,7 @@ def _register_patch_hooks(
     return hooks
 
 
-def _resolve_patch_module_name(layer_name: str) -> str:
+def resolve_patch_module_name(layer_name: str) -> str:
     if layer_name.startswith("hidden_state.layer_"):
         layer_index = int(layer_name.split("_")[-1])
         return f"model.layers.{layer_index}"
@@ -166,7 +175,7 @@ def _resolve_patch_module_name(layer_name: str) -> str:
     return layer_name
 
 
-def _patch_output(
+def patch_output(
     *,
     output: Any,
     donor_tensor: Any,
@@ -199,7 +208,7 @@ def _patch_output(
     return output
 
 
-def _sample_top_p(probabilities: Any, *, top_p: float) -> Any:
+def sample_top_p(probabilities: Any, *, top_p: float) -> Any:
     import torch
 
     sorted_probabilities, sorted_indices = torch.sort(probabilities, descending=True)

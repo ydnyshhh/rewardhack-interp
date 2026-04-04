@@ -1,9 +1,23 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from rewardhack_interp.config import EnvironmentSpec
-from rewardhack_interp.types import RewardMetrics, TaskReference
+from rewardhack_interp.types import (
+    NormalizedRolloutRecord,
+    RewardMetrics,
+    TaskReference,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class EvaluatedTaskOutput:
+    task_reference: TaskReference
+    reward_metrics: RewardMetrics
+    normalized_rollout: NormalizedRolloutRecord
+    mech_interp_row: dict[str, Any]
+    trajectory_payload: dict[str, Any]
 
 
 def build_environment(spec: EnvironmentSpec) -> Any:
@@ -51,7 +65,64 @@ def reward_metrics_from_trajectory(trajectory: Any) -> RewardMetrics:
     )
 
 
+def build_normalized_rollout_record(
+    task_reference: TaskReference,
+    completion: str,
+    reward_metrics: RewardMetrics,
+) -> NormalizedRolloutRecord:
+    return NormalizedRolloutRecord(
+        prompt=task_reference.prompt,
+        completion=completion,
+        env_id=task_reference.environment_name,
+        family_id=task_reference.family,
+        task_id=task_reference.task_id,
+        official_reward=reward_metrics.official_reward,
+        oracle_reward=reward_metrics.oracle_reward,
+        verifier_gap=reward_metrics.verifier_gap,
+        false_pass=reward_metrics.false_pass,
+        exploit_labels=list(reward_metrics.exploit_labels),
+    )
+
+
 def build_mech_interp_row(trajectory: Any) -> dict[str, Any]:
     from rewardhack_gym import build_mech_interp_record
 
     return build_mech_interp_record(trajectory).to_dict()
+
+
+def evaluate_task_output(
+    *,
+    environment: Any,
+    spec: EnvironmentSpec,
+    task: Any,
+    task_seed: int,
+    completion: str,
+    policy_id: str,
+    include_hidden_task_metadata: bool = False,
+    steps: list[dict[str, Any]] | None = None,
+    annotations: dict[str, Any] | None = None,
+) -> EvaluatedTaskOutput:
+    task_reference = task_to_reference(task, spec, task_seed)
+    trajectory = environment.evaluate_output(
+        task,
+        completion,
+        steps=steps,
+        policy_id=policy_id,
+        annotations=annotations,
+    )
+    reward_metrics = reward_metrics_from_trajectory(trajectory)
+    normalized_rollout = build_normalized_rollout_record(
+        task_reference=task_reference,
+        completion=completion,
+        reward_metrics=reward_metrics,
+    )
+    trajectory_payload = trajectory.to_dict(
+        include_hidden_task_metadata=include_hidden_task_metadata
+    )
+    return EvaluatedTaskOutput(
+        task_reference=task_reference,
+        reward_metrics=reward_metrics,
+        normalized_rollout=normalized_rollout,
+        mech_interp_row=build_mech_interp_row(trajectory),
+        trajectory_payload=trajectory_payload,
+    )

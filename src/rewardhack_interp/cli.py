@@ -28,6 +28,7 @@ from rewardhack_interp.io import append_jsonl, load_models
 from rewardhack_interp.modeling import load_qwen_model
 from rewardhack_interp.rl.grpo import run_grpo
 from rewardhack_interp.rollouts import collect_rollouts
+from rewardhack_interp.tracking import start_wandb_run
 from rewardhack_interp.types import TrajectoryArtifact
 from rewardhack_interp.utils.paths import ensure_parent_dir
 
@@ -55,10 +56,23 @@ def capture_activations_command(config: Path, rollouts: Path) -> None:
     manifest_path = rollout_config.activation_manifest_path or rollouts.with_name(
         f"{rollouts.stem}.activations.jsonl"
     )
-    ensure_parent_dir(manifest_path).write_text("", encoding="utf-8")
-    for record in records:
-        artifact = runner.capture_from_rollout_record(record)
-        append_jsonl(manifest_path, [artifact.model_dump(mode="json")])
+    with start_wandb_run(
+        wandb_config=rollout_config.wandb,
+        run_name=f"{rollout_config.run_name}-capture-activations",
+        job_type="activation_capture",
+        config_payload=rollout_config.model_dump(mode="json"),
+    ) as tracker:
+        ensure_parent_dir(manifest_path).write_text("", encoding="utf-8")
+        for record in records:
+            artifact = runner.capture_from_rollout_record(record)
+            append_jsonl(manifest_path, [artifact.model_dump(mode="json")])
+        tracker.log_summary(
+            {
+                "manifest_path": str(manifest_path.resolve()),
+                "num_records": len(records),
+            }
+        )
+        tracker.log_path(manifest_path, artifact_type="activation-manifest")
     typer.echo(f"Wrote activation manifest to {manifest_path.resolve()}")
 
 

@@ -30,14 +30,14 @@ class ActivationCaptureRunner:
         input_ids = torch.tensor([token_ids], dtype=torch.long, device=model_device)
         attention_mask = torch.ones_like(input_ids)
 
-        hooked_modules = _resolve_module_names(model, self.config.module_globs)
+        hooked_modules = resolve_module_names(model, self.config.module_globs)
         captured_tensors: dict[str, Any] = {}
         hooks = []
         for name, module in model.named_modules():
             if name in hooked_modules:
                 hooks.append(
                     module.register_forward_hook(
-                        lambda _module, _args, output, *, module_name=name: _capture_hook(
+                        lambda _module, _args, output, *, module_name=name: capture_hook(
                             captured_tensors,
                             module_name,
                             output,
@@ -77,7 +77,7 @@ class ActivationCaptureRunner:
                     if hidden_index == 0
                     else f"hidden_state.layer_{hidden_index - 1}"
                 )
-                captured_tensors[tensor_name] = _to_capture_tensor(
+                captured_tensors[tensor_name] = to_capture_tensor(
                     hidden_state,
                     self.config.capture_dtype,
                 )
@@ -137,26 +137,26 @@ def load_activation_tensors(artifact: ActivationCaptureArtifact) -> dict[str, An
     return torch.load(artifact.tensor_path, map_location="cpu")
 
 
-def _resolve_module_names(model: Any, globs: list[str]) -> set[str]:
+def resolve_module_names(model: Any, globs: list[str]) -> set[str]:
     if not globs:
         return set()
     names = {name for name, _module in model.named_modules()}
     return {name for name in names if any(fnmatchcase(name, pattern) for pattern in globs)}
 
 
-def _capture_hook(
+def capture_hook(
     captured_tensors: dict[str, Any],
     module_name: str,
     output: Any,
     capture_dtype: str,
 ) -> None:
-    tensor = _first_tensor(output)
+    tensor = first_tensor(output)
     if tensor is None:
         return
-    captured_tensors[f"module.{module_name}"] = _to_capture_tensor(tensor, capture_dtype)
+    captured_tensors[f"module.{module_name}"] = to_capture_tensor(tensor, capture_dtype)
 
 
-def _first_tensor(output: Any) -> Any | None:
+def first_tensor(output: Any) -> Any | None:
     try:
         import torch
     except ImportError:
@@ -171,7 +171,7 @@ def _first_tensor(output: Any) -> Any | None:
     return None
 
 
-def _to_capture_tensor(tensor: Any, capture_dtype: str) -> Any:
+def to_capture_tensor(tensor: Any, capture_dtype: str) -> Any:
     import torch
 
     dtype_map = {

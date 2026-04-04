@@ -10,6 +10,11 @@ This repository does not re-implement environments. It treats `rewardhack-gym` a
 - RL-facing reward records
 - trace-oriented evaluation
 
+The integration layer in [`src/rewardhack_interp/gym_integration.py`](/D:/rewardhack-interp/src/rewardhack_interp/gym_integration.py)
+is the main adapter boundary. It owns the normalized rollout record used across the repo:
+`prompt`, `completion`, `env_id`, `family_id`, `task_id`, `official_reward`, `oracle_reward`,
+`verifier_gap`, `false_pass`, and `exploit_labels`.
+
 The purpose of this repo is to let you run Qwen 3 models on those tasks, collect and label trajectories, capture activations, run internal-state analyses, intervene causally, and compare checkpoints before and after GRPO-style optimization.
 
 ## Scientific Focus
@@ -31,6 +36,7 @@ The project is built around questions like:
 - Prompt-boundary activation patching experiments on matched examples
 - GRPO training under `official`, `oracle`, `gap_aware`, and `anti_hack` reward definitions
 - Checkpoint comparison across base and post-training variants
+- Optional Weights & Biases tracking for rollouts, activation capture, analysis jobs, checkpoint comparison, and GRPO
 
 ## Quick Start
 
@@ -38,6 +44,8 @@ The project is built around questions like:
 uv sync
 uv run rewardhack-interp --help
 ```
+
+If you want W&B logging, configure a `[wandb]` block in the relevant TOML file and set `WANDB_API_KEY`.
 
 Example workflows:
 
@@ -75,3 +83,4 @@ uv run rewardhack-interp train-grpo --config configs/examples/grpo_weak_reward.t
 - Activation capture is implemented as replay over the exact prompt/completion token sequence saved with each rollout.
 - The causal patching workflow currently patches prompt-boundary activations for selected layers or modules, which keeps the intervention path inspectable and easy to extend.
 - `rewardhack-gym` is installed directly from GitHub through the project dependency set so the integration stays pinned to the real substrate rather than a local copy.
+- W&B support uses `wandb.init()` context-managed runs and optional artifact logging, following the official W&B SDK guidance.

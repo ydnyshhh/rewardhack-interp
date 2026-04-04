@@ -14,6 +14,17 @@ This produces:
 - a summary JSON file
 - optional activation tensor bundles plus an activation manifest
 
+To send the run to W&B, add a `[wandb]` block to the rollout config, for example:
+
+```toml
+[wandb]
+enabled = true
+project = "rewardhack-interp"
+entity = "your-entity"
+group = "qwen3-spec-overfit"
+mode = "online"
+```
+
 ## 2. Train a Probe
 
 After capturing activations, run:
@@ -69,6 +80,8 @@ Reward modes:
 - `oracle`
 - `gap_aware`
 - `anti_hack`
+
+GRPO runs also support W&B through the same `[wandb]` config block.
 
 ## 7. Compare Checkpoints
 

@@ -105,6 +105,34 @@ class ActivationCaptureConfig(BaseModel):
         return value
 
 
+class WandbConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = False
+    project: str
+    entity: str | None = None
+    group: str | None = None
+    job_type: str | None = None
+    name: str | None = None
+    notes: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    mode: str | None = None
+    dir: Path = Path("artifacts/wandb")
+    save_code: bool = False
+    log_artifacts: bool = True
+    artifact_name_prefix: str = "rewardhack-interp"
+
+    @field_validator("mode")
+    @classmethod
+    def validate_mode(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        allowed = {"online", "offline", "disabled", "shared"}
+        if value not in allowed:
+            raise ValueError(f"wandb.mode must be one of {sorted(allowed)}.")
+        return value
+
+
 class RolloutConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -116,6 +144,7 @@ class RolloutConfig(BaseModel):
     activation_capture: ActivationCaptureConfig = Field(default_factory=ActivationCaptureConfig)
     activation_manifest_path: Path | None = None
     include_hidden_task_metadata: bool = False
+    wandb: WandbConfig | None = None
 
 
 class FeatureSelectionConfig(BaseModel):
@@ -139,6 +168,7 @@ class ProbeConfig(BaseModel):
     random_state: int = 0
     max_iter: int = 2000
     regularization_strength: float = 1.0
+    wandb: WandbConfig | None = None
 
 
 class RepresentationConfig(BaseModel):
@@ -146,6 +176,7 @@ class RepresentationConfig(BaseModel):
 
     features: FeatureSelectionConfig
     output_path: Path = Path("artifacts/analysis/representations.json")
+    wandb: WandbConfig | None = None
 
 
 class ClusteringConfig(BaseModel):
@@ -155,6 +186,7 @@ class ClusteringConfig(BaseModel):
     output_path: Path = Path("artifacts/analysis/clusters.json")
     n_clusters: int = 4
     random_state: int = 0
+    wandb: WandbConfig | None = None
 
 
 class LogitLensConfig(BaseModel):
@@ -166,6 +198,7 @@ class LogitLensConfig(BaseModel):
     tensor_names: list[str] | None = None
     position_strategy: PoolingStrategy = PoolingStrategy.last_completion_token
     top_k: int = 10
+    wandb: WandbConfig | None = None
 
 
 class PatchConfig(BaseModel):
@@ -186,6 +219,7 @@ class PatchConfig(BaseModel):
     do_sample: bool = False
     temperature: float = 1.0
     top_p: float = 1.0
+    wandb: WandbConfig | None = None
 
 
 class LoraTuningConfig(BaseModel):
@@ -235,6 +269,7 @@ class GRPORunConfig(BaseModel):
     lora: LoraTuningConfig | None = Field(default_factory=LoraTuningConfig)
     reward_trace_output: Path | None = Path("artifacts/checkpoints/grpo_reward_traces.jsonl")
     trainer_kwargs: dict[str, Any] = Field(default_factory=dict)
+    wandb: WandbConfig | None = None
 
 
 class CheckpointComparisonConfig(BaseModel):
@@ -245,6 +280,7 @@ class CheckpointComparisonConfig(BaseModel):
     sampling: SamplingConfig = Field(default_factory=SamplingConfig)
     output_path: Path = Path("artifacts/checkpoints/compare.json")
     per_checkpoint_rollout_dir: Path = Path("artifacts/checkpoints/rollouts")
+    wandb: WandbConfig | None = None
 
 
 def load_config(path: str | Path, config_cls: type[ConfigT]) -> ConfigT:

@@ -73,6 +73,21 @@ class RewardMetrics(BaseModel):
     reward_metadata: dict[str, Any] = Field(default_factory=dict)
 
 
+class NormalizedRolloutRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str
+    completion: str
+    env_id: str
+    family_id: str
+    task_id: str
+    official_reward: float
+    oracle_reward: float
+    verifier_gap: float
+    false_pass: bool
+    exploit_labels: list[str] = Field(default_factory=list)
+
+
 class GenerationRecord(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -101,6 +116,7 @@ class TrajectoryArtifact(BaseModel):
     task: TaskReference
     generation: GenerationRecord
     reward_metrics: RewardMetrics
+    normalized_rollout: NormalizedRolloutRecord
     cohort: CohortLabel
     trajectory: dict[str, Any]
     mech_interp_row: dict[str, Any]

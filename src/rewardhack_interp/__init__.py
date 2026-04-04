@@ -14,6 +14,7 @@ from rewardhack_interp.config import (
     RepresentationConfig,
     RolloutConfig,
     SamplingConfig,
+    WandbConfig,
     load_config,
 )
 from rewardhack_interp.types import (
@@ -22,6 +23,7 @@ from rewardhack_interp.types import (
     ClusteringArtifact,
     CohortLabel,
     LogitLensArtifact,
+    NormalizedRolloutRecord,
     PatchTrialArtifact,
     ProbeArtifact,
     RepresentationArtifact,
@@ -43,6 +45,7 @@ __all__ = [
     "LogitLensArtifact",
     "LogitLensConfig",
     "ModelConfig",
+    "NormalizedRolloutRecord",
     "PatchConfig",
     "PatchTrialArtifact",
     "ProbeArtifact",
@@ -53,5 +56,6 @@ __all__ = [
     "RolloutConfig",
     "SamplingConfig",
     "TrajectoryArtifact",
+    "WandbConfig",
     "load_config",
 ]

@@ -7,6 +7,17 @@ Rollouts are stored as JSONL. Each row is a `TrajectoryArtifact` with:
 - environment/task reference
 - rendered prompt
 - completion text and token ids
+- normalized rollout adapter record with:
+  - `prompt`
+  - `completion`
+  - `env_id`
+  - `family_id`
+  - `task_id`
+  - `official_reward`
+  - `oracle_reward`
+  - `verifier_gap`
+  - `false_pass`
+  - `exploit_labels`
 - raw `rewardhack-gym` trajectory payload
 - direct reward fields:
   - `official_reward`
@@ -39,3 +50,15 @@ Activation capture creates two files per trace:
 - checkpoint comparison: JSON
 
 Every downstream report is designed to stay small and human-inspectable while still pointing back to the originating trace ids.
+
+## W&B Logging
+
+When a workflow config includes an enabled `[wandb]` block, the repo logs:
+
+- run config
+- summary metrics
+- output JSON and JSONL artifacts
+- activation manifests
+- probe coefficient files
+
+Full activation tensor directories and full checkpoint directories are not uploaded automatically by default.

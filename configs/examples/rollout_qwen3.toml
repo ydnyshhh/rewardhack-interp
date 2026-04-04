@@ -29,3 +29,9 @@ capture_hidden_states = true
 hidden_state_layers = [0, 8, 16, 24, 31]
 module_globs = ["model.layers.*.mlp", "model.layers.*.self_attn"]
 capture_dtype = "float32"
+
+[wandb]
+enabled = false
+project = "rewardhack-interp"
+group = "qwen3-spec-overfit"
+mode = "offline"

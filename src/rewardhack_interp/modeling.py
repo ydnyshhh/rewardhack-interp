@@ -73,12 +73,12 @@ class LoadedQwenModel:
         samples: list[GeneratedSample] = []
         for sample_index, sequence in enumerate(generation_output.sequences):
             raw_completion = sequence[prompt_length:].tolist()
-            trimmed_completion, finish_reason = _trim_generated_ids(
+            trimmed_completion, finish_reason = trim_generated_ids(
                 raw_completion,
                 eos_token_id=self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
             )
-            logprobs = _extract_token_logprobs(scores, sample_index, trimmed_completion)
+            logprobs = extract_token_logprobs(scores, sample_index, trimmed_completion)
             decoded_tokens = [
                 self.tokenizer.decode(
                     [token_id],
@@ -137,7 +137,7 @@ def load_qwen_model(config: ModelConfig) -> LoadedQwenModel:
     return LoadedQwenModel(tokenizer=tokenizer, model=model, config=config)
 
 
-def _trim_generated_ids(
+def trim_generated_ids(
     token_ids: list[int],
     *,
     eos_token_id: int | None,
@@ -156,7 +156,7 @@ def _trim_generated_ids(
     return trimmed, finish_reason
 
 
-def _extract_token_logprobs(
+def extract_token_logprobs(
     score_tensors: list[Any],
     sample_index: int,
     completion_token_ids: list[int],

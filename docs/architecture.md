@@ -16,7 +16,8 @@
   Pydantic schemas for persisted rollouts, activations, probes, clustering reports, logit-lens outputs, patch trials, and checkpoint summaries.
 
 - `rewardhack_interp.gym_integration`
-  Thin integration with `rewardhack-gym` environment creation, task serialization, mech-interp row construction, and reward extraction.
+  The main adapter boundary over `rewardhack-gym`: environment creation, task serialization,
+  normalized rollout construction, mech-interp row construction, and reward extraction.
 
 - `rewardhack_interp.modeling`
   Qwen 3 loading and completion generation through Hugging Face Transformers and optional PEFT adapters.
@@ -36,6 +37,9 @@
 - `rewardhack_interp.rl`
   Reward scalarization and GRPO training utilities built directly from `rewardhack-gym` signals.
 
+- `rewardhack_interp.tracking`
+  Optional Weights & Biases run management, metric flattening, artifact logging, and trainer integration.
+
 - `rewardhack_interp.checkpoints`
   Shared-seed evaluation across multiple checkpoints.
 
@@ -44,7 +48,8 @@
 The key persisted units are:
 
 - `TrajectoryArtifact`
-  Full rollout metadata plus the raw `rewardhack-gym` trajectory payload.
+  Full rollout metadata plus the raw `rewardhack-gym` trajectory payload and a normalized adapter
+  record for prompt/completion/reward-gap analysis.
 
 - `ActivationCaptureArtifact`
   Metadata for a saved activation tensor bundle, keyed by `trace_id`.
