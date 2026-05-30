@@ -1,0 +1,36 @@
+[project]
+name = "rewardhack-prime"
+version = "0.1.0"
+description = "Prime Verifiers environment package for RewardHack-Gym reward-hacking benchmarks."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Yadnyesh Chakane" },
+]
+keywords = [
+  "reward-hacking",
+  "rewardhack-gym",
+  "prime-intellect",
+  "verifiers",
+  "reinforcement-learning",
+]
+dependencies = [
+  "pydantic>=2.10.0",
+  "verifiers>=0.1.14",
+  "rewardhack-gym @ git+https://github.com/ydnyshhh/rewardhack-gym.git",
+]
+
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["rewardhack_prime"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.verifiers.eval]
+num_examples = 20
+rollouts_per_example = 1
