@@ -8,6 +8,12 @@ import verifiers as vf
 
 from rewardhack_prime.config import RewardHackTasksetConfig, build_environment_config
 from rewardhack_prime.conversion import rewardhack_task_to_vf_task
+from rewardhack_prime.execution import (
+    ExecutionBackend,
+    ExecutionLimits,
+    build_execution_backend,
+    install_execution_backend,
+)
 from rewardhack_prime.scoring import RewardHackScores, scalarize_reward, score_state
 from rewardhack_prime.store import PrivateTaskStore
 
@@ -18,6 +24,7 @@ class RewardHackTaskset(vf.Taskset):
     def __init__(self, config: RewardHackTasksetConfig) -> None:
         super().__init__(config=config)
         self._environment: Any | None = None
+        self._execution_backend: ExecutionBackend | None = None
         self.private_tasks = PrivateTaskStore()
 
     @property
@@ -25,11 +32,35 @@ class RewardHackTaskset(vf.Taskset):
         if self._environment is None:
             from rewardhack_gym import create_environment
 
+            self._install_execution_backend()
             self._environment = create_environment(
                 self.config.family,
                 config=build_environment_config(self.config),
             )
+            self._install_execution_backend()
         return self._environment
+
+    @property
+    def execution_limits(self) -> ExecutionLimits:
+        return ExecutionLimits(
+            timeout_seconds=self.config.timeout_seconds,
+            memory_limit_mb=self.config.memory_limit_mb,
+            stdout_limit_chars=self.config.stdout_limit_chars,
+            stderr_limit_chars=self.config.stderr_limit_chars,
+            max_output_object_size=self.config.max_output_object_size,
+        )
+
+    @property
+    def execution_backend(self) -> ExecutionBackend:
+        if self._execution_backend is None:
+            self._execution_backend = build_execution_backend(
+                self.config.execution_backend,
+                self.execution_limits,
+            )
+        return self._execution_backend
+
+    def _install_execution_backend(self) -> None:
+        install_execution_backend(self.execution_backend, self.execution_limits)
 
     def rows(self) -> list[dict[str, Any]]:
         return list(self.load_tasks())

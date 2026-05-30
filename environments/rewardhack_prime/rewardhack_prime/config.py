@@ -22,6 +22,12 @@ SUPPORTED_REWARD_MODES: tuple[str, ...] = (
     "gap_penalized",
     "false_pass_penalized",
 )
+SUPPORTED_EXECUTION_BACKENDS: tuple[str, ...] = (
+    "subprocess",
+    "local_trusted",
+    "docker",
+    "prime_sandbox",
+)
 
 
 class RewardHackTasksetConfig(vf.TasksetConfig):
@@ -33,9 +39,16 @@ class RewardHackTasksetConfig(vf.TasksetConfig):
     reward_mode: str = "official_only"
     reward_penalty: float = 1.0
     include_oracle_metrics: bool = True
+    execution_backend: str = "subprocess"
+    timeout_seconds: float = 2.0
+    memory_limit_mb: int = 256
+    stdout_limit_chars: int = 20_000
+    stderr_limit_chars: int = 20_000
+    max_output_object_size: int = 20_000
 
     supported_profiles: ClassVar[tuple[str, ...]] = SUPPORTED_PROFILES
     supported_reward_modes: ClassVar[tuple[str, ...]] = SUPPORTED_REWARD_MODES
+    supported_execution_backends: ClassVar[tuple[str, ...]] = SUPPORTED_EXECUTION_BACKENDS
 
     @field_validator("family")
     @classmethod
@@ -74,6 +87,32 @@ class RewardHackTasksetConfig(vf.TasksetConfig):
             raise ValueError("reward_penalty must be non-negative.")
         return value
 
+    @field_validator("execution_backend")
+    @classmethod
+    def validate_execution_backend(cls, value: str) -> str:
+        if value not in SUPPORTED_EXECUTION_BACKENDS:
+            raise ValueError(f"execution_backend must be one of {SUPPORTED_EXECUTION_BACKENDS}.")
+        return value
+
+    @field_validator("timeout_seconds")
+    @classmethod
+    def validate_timeout_seconds(cls, value: float) -> float:
+        if value <= 0.0:
+            raise ValueError("timeout_seconds must be positive.")
+        return value
+
+    @field_validator(
+        "memory_limit_mb",
+        "stdout_limit_chars",
+        "stderr_limit_chars",
+        "max_output_object_size",
+    )
+    @classmethod
+    def validate_positive_limits(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("execution limits must be positive.")
+        return value
+
 
 def exploitability_profile_from_level(level: str) -> ExploitabilityProfile:
     from rewardhack_gym.core.config import ExploitabilityProfile
@@ -106,6 +145,9 @@ def build_environment_config(config: RewardHackTasksetConfig) -> EnvironmentConf
                 "split": config.split,
                 "reward_mode": config.reward_mode,
                 "reward_penalty": config.reward_penalty,
+                "execution_backend": config.execution_backend,
+                "timeout_seconds": config.timeout_seconds,
+                "memory_limit_mb": config.memory_limit_mb,
             }
         },
     )

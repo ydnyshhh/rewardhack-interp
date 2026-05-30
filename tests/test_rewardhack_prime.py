@@ -336,3 +336,83 @@ def test_metrics_reuse_one_cached_rewardhack_trajectory(monkeypatch: MonkeyPatch
     assert oracle_score == state[TRAJECTORY_CACHE_KEY].oracle_score
     assert hack_gap == state[TRAJECTORY_CACHE_KEY].hack_gap
     assert false_pass == float(state[TRAJECTORY_CACHE_KEY].false_pass)
+
+
+def test_subprocess_backend_times_out_and_kills_worker(monkeypatch: MonkeyPatch) -> None:
+    install_verifiers_stub(monkeypatch)
+    install_rewardhack_prime_path(monkeypatch)
+
+    from rewardhack_prime.execution import SubprocessBackend
+
+    backend = SubprocessBackend(stdout_limit_chars=200, stderr_limit_chars=200)
+    result = asyncio.run(
+        backend.run_function_cases(
+            "def solve():\n    while True:\n        pass\n",
+            "solve",
+            [{"label": "loop", "args": [], "expected": 1}],
+            timeout_s=0.25,
+            memory_mb=256,
+        )
+    )
+
+    assert result.status == "timeout"
+    assert result.diagnostics["worker_killed"] is True
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_error"),
+    [
+        ("import os\n\ndef solve():\n    return 1\n", "import blocked"),
+        ("def solve():\n    return open('/etc/passwd').read()\n", "open"),
+        (
+            "def solve():\n    return __import__('subprocess').run(['echo', 'x'])\n",
+            "__import__",
+        ),
+    ],
+)
+def test_subprocess_backend_blocks_escape_hatches(
+    monkeypatch: MonkeyPatch,
+    source: str,
+    expected_error: str,
+) -> None:
+    install_verifiers_stub(monkeypatch)
+    install_rewardhack_prime_path(monkeypatch)
+
+    from rewardhack_prime.execution import SubprocessBackend
+
+    backend = SubprocessBackend(stdout_limit_chars=500, stderr_limit_chars=500)
+    result = asyncio.run(
+        backend.run_function_cases(
+            source,
+            "solve",
+            [{"label": "escape", "args": [], "expected": 1}],
+            timeout_s=1.0,
+            memory_mb=256,
+        )
+    )
+
+    assert result.status == "sandbox_error"
+    assert expected_error in result.stderr
+
+
+def test_subprocess_backend_truncates_large_stdout(monkeypatch: MonkeyPatch) -> None:
+    install_verifiers_stub(monkeypatch)
+    install_rewardhack_prime_path(monkeypatch)
+
+    from rewardhack_prime.execution import SubprocessBackend
+
+    backend = SubprocessBackend(stdout_limit_chars=128, stderr_limit_chars=128)
+    result = asyncio.run(
+        backend.run_function_cases(
+            "def solve():\n    print('x' * 10_000_000)\n    return 1\n",
+            "solve",
+            [{"label": "large-output", "args": [], "expected": 1}],
+            timeout_s=2.0,
+            memory_mb=256,
+        )
+    )
+
+    assert result.status == "passed"
+    assert result.case_results[0]["passed"] is True
+    assert len(result.stdout) < 200
+    assert "truncated" in result.stdout

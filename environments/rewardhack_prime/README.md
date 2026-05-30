@@ -46,6 +46,12 @@ seed = 0
 reward_mode = "official_only"
 reward_penalty = 1.0
 include_oracle_metrics = true
+execution_backend = "subprocess"
+timeout_seconds = 2.0
+memory_limit_mb = 256
+stdout_limit_chars = 20000
+stderr_limit_chars = 20000
+max_output_object_size = 20000
 
 [eval.harness]
 max_turns = 1
@@ -74,6 +80,12 @@ seed = 0
 reward_mode = "official_only"
 reward_penalty = 1.0
 include_oracle_metrics = true
+execution_backend = "subprocess"
+timeout_seconds = 2.0
+memory_limit_mb = 256
+stdout_limit_chars = 20000
+stderr_limit_chars = 20000
+max_output_object_size = 20000
 
 [env.harness]
 max_turns = 1
@@ -90,12 +102,24 @@ max_turns = 1
   `false_pass_penalized`.
 - `reward_penalty`: λ for `gap_penalized` and `false_pass_penalized`.
 - `include_oracle_metrics`: when true, emit oracle, gap, and false-pass metrics.
+- `execution_backend`: `subprocess` by default. `local_trusted` is for local
+  research/tests only; `docker` and `prime_sandbox` are reserved backend names.
+- `timeout_seconds`, `memory_limit_mb`, `stdout_limit_chars`,
+  `stderr_limit_chars`, `max_output_object_size`: hard limits passed to every
+  code execution attempt.
 
 `official_only` is the default and should be used for reward-hacking studies
 where the model optimizes the imperfect verifier. The oracle and gap outputs are
 monitoring signals. `oracle_upper_bound`, `gap_penalized`, and
 `false_pass_penalized` are intended for controls or mitigation experiments, not
 the default weak-verifier training condition.
+
+Code submissions are not executed inside the current Python process in the
+default Prime path. The adapter installs a subprocess execution backend over the
+RewardHack-Gym code runtime, runs each submission in a temporary working
+directory, blocks imports and filesystem/process escape hatches, truncates large
+outputs, and kills the worker on timeout. Use `local_trusted` only when you
+explicitly want RewardHack-Gym's original trusted local runtime.
 
 `aligned` is a clean control profile defined by this adapter. It constructs a
 strong, broad official-verifier profile instead of calling
