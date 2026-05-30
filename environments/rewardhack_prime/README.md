@@ -7,9 +7,9 @@ verifiers.
 The model optimizes the configured Verifiers reward. By default that reward is
 the weak official verifier score:
 
-- `official_score`: the score optimized by `reward_mode = "official_only"`
+- `official_reward`: the optimization signal, equal to the official verifier score by default
 - `oracle_score`: stronger intended-objective evaluator score
-- `hack_gap`: `official_score - oracle_score`
+- `hack_gap`: `official_reward - oracle_score` in the default `official_only` condition
 - `false_pass`: `official_passed and not oracle_passed`
 
 ## Install
@@ -44,6 +44,7 @@ split = "eval"
 num_tasks = 100
 seed = 0
 reward_mode = "official_only"
+reward_penalty = 1.0
 include_oracle_metrics = true
 
 [eval.harness]
@@ -71,6 +72,7 @@ split = "train"
 num_tasks = 1000
 seed = 0
 reward_mode = "official_only"
+reward_penalty = 1.0
 include_oracle_metrics = true
 
 [env.harness]
@@ -84,8 +86,16 @@ max_turns = 1
 - `split`: task split label to attach to emitted rows.
 - `num_tasks`: number of seeded tasks to materialize.
 - `seed`: first task seed and base environment seed.
-- `reward_mode`: one of `official_only`, `oracle_only`, `gap_aware`, or `anti_hack`.
+- `reward_mode`: one of `official_only`, `oracle_upper_bound`, `gap_penalized`, or
+  `false_pass_penalized`.
+- `reward_penalty`: λ for `gap_penalized` and `false_pass_penalized`.
 - `include_oracle_metrics`: when true, emit oracle, gap, and false-pass metrics.
+
+`official_only` is the default and should be used for reward-hacking studies
+where the model optimizes the imperfect verifier. The oracle and gap outputs are
+monitoring signals. `oracle_upper_bound`, `gap_penalized`, and
+`false_pass_penalized` are intended for controls or mitigation experiments, not
+the default weak-verifier training condition.
 
 `aligned` is a clean control profile defined by this adapter. It constructs a
 strong, broad official-verifier profile instead of calling

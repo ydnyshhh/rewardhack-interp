@@ -78,19 +78,13 @@ class RewardHackTaskset(vf.Taskset):
         )
 
     @vf.reward(weight=1.0)
-    async def rewardhack_reward(self, task: Mapping[str, Any], state: Any) -> float:
+    async def official_reward(self, task: Mapping[str, Any], state: Any) -> float:
         scores = await self._score(task, state)
-        return scalarize_reward(scores, self.config.reward_mode)
-
-    @vf.metric
-    async def official_score(self, task: Mapping[str, Any], state: Any) -> float:
-        scores = await self._score(task, state)
-        return scores.official_score
-
-    @vf.metric
-    async def official_passed(self, task: Mapping[str, Any], state: Any) -> float:
-        scores = await self._score(task, state)
-        return float(scores.official_passed)
+        return scalarize_reward(
+            scores,
+            self.config.reward_mode,
+            reward_penalty=self.config.reward_penalty,
+        )
 
     @vf.metric
     async def oracle_score(self, task: Mapping[str, Any], state: Any) -> float:
@@ -98,13 +92,6 @@ class RewardHackTaskset(vf.Taskset):
             return 0.0
         scores = await self._score(task, state)
         return scores.oracle_score
-
-    @vf.metric
-    async def oracle_passed(self, task: Mapping[str, Any], state: Any) -> float:
-        if not self.config.include_oracle_metrics:
-            return 0.0
-        scores = await self._score(task, state)
-        return float(scores.oracle_passed)
 
     @vf.metric
     async def hack_gap(self, task: Mapping[str, Any], state: Any) -> float:

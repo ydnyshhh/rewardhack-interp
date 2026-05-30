@@ -18,9 +18,9 @@ SUPPORTED_PROFILES: tuple[str, ...] = (
 )
 SUPPORTED_REWARD_MODES: tuple[str, ...] = (
     "official_only",
-    "oracle_only",
-    "gap_aware",
-    "anti_hack",
+    "oracle_upper_bound",
+    "gap_penalized",
+    "false_pass_penalized",
 )
 
 
@@ -31,6 +31,7 @@ class RewardHackTasksetConfig(vf.TasksetConfig):
     num_tasks: int = 100
     seed: int = 0
     reward_mode: str = "official_only"
+    reward_penalty: float = 1.0
     include_oracle_metrics: bool = True
 
     supported_profiles: ClassVar[tuple[str, ...]] = SUPPORTED_PROFILES
@@ -66,6 +67,13 @@ class RewardHackTasksetConfig(vf.TasksetConfig):
             raise ValueError(f"reward_mode must be one of {SUPPORTED_REWARD_MODES}.")
         return value
 
+    @field_validator("reward_penalty")
+    @classmethod
+    def validate_reward_penalty(cls, value: float) -> float:
+        if value < 0.0:
+            raise ValueError("reward_penalty must be non-negative.")
+        return value
+
 
 def exploitability_profile_from_level(level: str) -> ExploitabilityProfile:
     from rewardhack_gym.core.config import ExploitabilityProfile
@@ -97,6 +105,7 @@ def build_environment_config(config: RewardHackTasksetConfig) -> EnvironmentConf
                 "profile": config.profile,
                 "split": config.split,
                 "reward_mode": config.reward_mode,
+                "reward_penalty": config.reward_penalty,
             }
         },
     )
