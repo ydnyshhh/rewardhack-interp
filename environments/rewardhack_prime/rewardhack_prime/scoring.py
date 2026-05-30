@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from rewardhack_prime.config import SUPPORTED_REWARD_MODES
+from rewardhack_prime.conversion import public_task_payload
 
 SCORE_CACHE_KEY = "_rewardhack_prime_scores"
 
@@ -82,7 +83,7 @@ def rewardhack_scores_from_trajectory(trajectory: Any) -> RewardHackScores:
         oracle_passed=bool(trajectory.oracle_result.passed),
         exploit_labels=tuple(str(label) for label in trajectory.exploit_labels),
         annotations=dict(trajectory.annotations),
-        trajectory=trajectory.to_dict(include_hidden_task_metadata=False),
+        trajectory=redacted_trajectory_payload(trajectory),
     )
 
 
@@ -104,6 +105,37 @@ def evaluate_completion(
         annotations={"rewardhack_prime": True},
     )
     return rewardhack_scores_from_trajectory(trajectory)
+
+
+def redacted_trajectory_payload(trajectory: Any) -> dict[str, Any]:
+    payload = trajectory.to_dict(include_hidden_task_metadata=False)
+    payload["task"] = public_task_payload(trajectory.task)
+    payload["oracle_result"] = redacted_evaluator_payload(payload["oracle_result"])
+    return payload
+
+
+def redacted_evaluator_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    components = payload.get("components", ())
+    redacted_components = []
+    if isinstance(components, Sequence) and not isinstance(components, (bytes, bytearray, str)):
+        for component in components:
+            if isinstance(component, Mapping):
+                redacted_components.append(
+                    {
+                        "checker_name": component.get("checker_name"),
+                        "score": component.get("score"),
+                        "passed": component.get("passed"),
+                        "warnings": list(component.get("warnings", ())),
+                    }
+                )
+    return {
+        "evaluator_name": payload.get("evaluator_name"),
+        "score": payload.get("score"),
+        "passed": payload.get("passed"),
+        "components": redacted_components,
+        "diagnostics": {},
+        "warnings": list(payload.get("warnings", ())),
+    }
 
 
 def scalarize_reward(scores: RewardHackScores, reward_mode: str) -> float:

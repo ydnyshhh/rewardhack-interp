@@ -9,6 +9,7 @@ import verifiers as vf
 from rewardhack_prime.config import RewardHackTasksetConfig, build_environment_config
 from rewardhack_prime.conversion import rewardhack_task_to_vf_task
 from rewardhack_prime.scoring import RewardHackScores, scalarize_reward, score_state
+from rewardhack_prime.store import PrivateTaskStore
 
 
 class RewardHackTaskset(vf.Taskset):
@@ -17,7 +18,7 @@ class RewardHackTaskset(vf.Taskset):
     def __init__(self, config: RewardHackTasksetConfig) -> None:
         super().__init__(config=config)
         self._environment: Any | None = None
-        self._tasks_by_id: dict[str, Any] = {}
+        self.private_tasks = PrivateTaskStore()
 
     @property
     def environment(self) -> Any:
@@ -41,7 +42,7 @@ class RewardHackTaskset(vf.Taskset):
             return []
 
         rows: list[dict[str, Any]] = []
-        self._tasks_by_id.clear()
+        self.private_tasks.clear()
         for offset in range(self.config.num_tasks):
             seed = self.config.seed + offset
             task = self.environment.sample_task(seed=seed)
@@ -49,17 +50,19 @@ class RewardHackTaskset(vf.Taskset):
             row["split"] = self.config.split
             row["max_turns"] = 1
             rows.append(row)
-            self._tasks_by_id[task.task_id] = task
+            self.private_tasks.add(task)
         return rows
 
     def _resolve_rewardhack_task(self, task: Mapping[str, Any]) -> Any:
         task_id = _extract_task_id(task)
         if task_id is None:
             raise KeyError("Verifiers task is missing info.task_id.")
-        if task_id not in self._tasks_by_id:
+        try:
+            return self.private_tasks.get(task_id)
+        except KeyError:
             self.rows()
         try:
-            return self._tasks_by_id[task_id]
+            return self.private_tasks.get(task_id)
         except KeyError as exc:
             raise KeyError(
                 f"RewardHack task {task_id!r} is not in this taskset cache. "
